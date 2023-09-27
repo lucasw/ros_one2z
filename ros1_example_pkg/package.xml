@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ros1_example_pkg</name>
+  <version>0.0.0</version>
+  <description>The ros1_example_pkg package</description>
+
+  <maintainer email="wsacul@gmail.com">Lucas Walter</maintainer>
+
+  <license>BSD3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+  </export>
+</package>

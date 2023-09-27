@@ -70,9 +70,9 @@ class GenerateImage(Node):
         msg.encoding = "rgb8"
         msg.header.stamp = self.get_clock().now().to_msg()
         self.publisher.publish(msg)
+        # nanoseconds / 1e9 instead of to_sec()
         t1 = self.get_clock().now()
-        # TODO(lucasw) is there a to_sec()?
-        self.get_logger().info(f"{(t1 - t0)}", throttle_duration_sec=2.0)
+        self.get_logger().info(f"{(t1 - t0).nanoseconds / 1e9:0.3f}s", throttle_duration_sec=2.0)
 
 
 def main(args=None):

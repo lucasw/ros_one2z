@@ -3,4 +3,6 @@ project(ros1_example_pkg)
 
 find_package(catkin REQUIRED)
 
+# TODO install scripts
+
 catkin_package()

@@ -69,6 +69,7 @@ class GenerateImage(Node):
         msg = self.cv_bridge.cv2_to_imgmsg(image_np, encoding="passthrough")
         msg.encoding = "rgb8"
         msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "map"
         self.publisher.publish(msg)
         # nanoseconds / 1e9 instead of to_sec()
         t1 = self.get_clock().now()

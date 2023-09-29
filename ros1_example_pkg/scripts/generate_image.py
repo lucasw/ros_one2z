@@ -69,13 +69,14 @@ class GenerateImage:
         msg = self.cv_bridge.cv2_to_imgmsg(image_np, encoding="passthrough")
         msg.encoding = "rgb8"
         msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = "map"
         self.publisher.publish(msg)
         t1 = rospy.Time.now()
         rospy.loginfo_throttle(2.0, f"{(t1 - t0).to_sec():0.3f}s")
 
 
 def main():
-    rospy.init_node("generate_image")
+    rospy.init_node("image_to_contour")
     _ = GenerateImage()
     rospy.spin()
 

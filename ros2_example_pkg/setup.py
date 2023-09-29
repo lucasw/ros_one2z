@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             "generate_image = ros2_example_pkg.generate_image:main",
+            "process_image = ros2_example_pkg.process_image:main",
         ],
     },
 )

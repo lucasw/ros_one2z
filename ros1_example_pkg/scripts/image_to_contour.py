@@ -6,13 +6,10 @@ September 2023
 Generate images with some moving graphics in them (e.g. a circle drawn with opencv that bounces around)
 """
 
-import cv2
 import rospy
+from bouncing_ball import image_to_contour
 from cv_bridge import CvBridge
-from geometry_msgs.msg import (
-    Point32,
-    PolygonStamped,
-)
+from geometry_msgs.msg import PolygonStamped
 from sensor_msgs.msg import Image
 
 
@@ -24,29 +21,15 @@ class ImageToContour():
 
         self.subscriber = rospy.Subscriber("image", Image, self.image_callback, queue_size=4)
 
-    def image_callback(self, msg):
+    def image_callback(self, image_msg: Image):
         t0 = rospy.Time.now()
-        image_np = self.cv_bridge.imgmsg_to_cv2(msg)
-        if len(image_np.shape) > 2:
-            image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2GRAY)
-
-        contours, hierarchy = cv2.findContours(image_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        polygon = PolygonStamped()
-        polygon.header = msg.header
-
-        for contour in contours:
-            for i in range(contour.shape[0]):
-                sc = 0.003
-                x = contour[i, 0, 0] * sc
-                y = contour[i, 0, 1] * sc
-                pt = Point32(x=x, y=y)
-                polygon.polygon.points.append(pt)
-
+        image_np = self.cv_bridge.imgmsg_to_cv2(image_msg)
+        polygon = image_to_contour(image_msg.header, image_np)
         self.publisher.publish(polygon)
 
         t1 = rospy.Time.now()
-        rospy.loginfo_throttle(2.0, f"{(t1 - t0).to_sec():0.3f}s")
+        age = t0 - image_msg.header.stamp
+        rospy.loginfo_throttle(1.0, f"msg {age.to_sec():0.3f}s old, processing {(t1 - t0).to_sec():0.3f}s")
 
 
 def main():

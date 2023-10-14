@@ -15,11 +15,13 @@
 
 import argparse
 import json
+from io import BytesIO
 
 # import numpy as np
 import rospy
 import zenoh
 from bouncing_ball import BouncingBall
+from cv_bridge import CvBridge
 # from zenoh import config
 
 
@@ -29,16 +31,31 @@ class GenerateImage:
         rospy.loginfo(f"Declaring Publisher on '{key}'...")
         self.pub = session.declare_publisher(key)
 
+        self.cv_bridge = CvBridge()
         self.bouncing_ball = BouncingBall()
 
         period = 0.0333
         self.timer = rospy.Timer(rospy.Duration(period), self.update)
 
     def update(self, event: rospy.timer.TimerEvent):
+        t0 = rospy.Time.now()
+
         image_np = self.bouncing_ball.update()
-        image_bytes = image_np.tobytes()
-        self.pub.put(image_bytes)
+        msg = self.cv_bridge.cv2_to_imgmsg(image_np, encoding="passthrough")
+        msg.encoding = "rgb8"
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = "map"
+
+        buff = BytesIO()
+        msg.serialize(buff)
+        self.pub.put(buff.getvalue())
+
+        # image_bytes = image_np.tobytes()
+        # self.pub.put(image_bytes)
         # rospy.loginfo_throttle(1.0, f"{len(image_bytes)} -> {len(np.frombuffer(image_bytes))}")
+
+        t1 = rospy.Time.now()
+        rospy.loginfo_throttle(2.0, f"{(t1 - t0).to_sec():0.3f}s")
 
     def __del__(self):
         rospy.loginfo("undeclaring publisher")

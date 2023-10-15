@@ -2,13 +2,20 @@
 <package format="2">
   <name>ros1_example_pkg</name>
   <version>0.0.0</version>
-  <description>The ros1_example_pkg package</description>
+  <description>Basic image generation and processing nodes in python and C++</description>
 
   <maintainer email="wsacul@gmail.com">Lucas Walter</maintainer>
 
   <license>BSD3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>roslint</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+
+  <exec_depend>rospy</exec_depend>
 
   <export>
   </export>

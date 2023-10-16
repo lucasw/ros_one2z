@@ -1,6 +1,6 @@
-# ros1vs2
+# ros1, ros2, zenoh
 
-Similar node graphs in vanilla/out-of-the-box ros1 and ros2 compared (except that ros1 is `one` version running on the latest Ubuntu, ros2 is `iron` or perhaps `rolling` on same OS), focus on localhost using python.
+Similar node graphs in vanilla/out-of-the-box ros1 and ros2 compared (except that ros1 is `one` version running on the latest Ubuntu, ros2 is `iron` or perhaps `rolling` on same OS), focus on localhost using python.  Also serializing messages into zenoh.
 
 * Publish mupltiple topics of ~2000x1000 color images at 30Hz, make something moving in them
 * have a pipeline of 3 or 4 nodes that do operations on the images and publish a modified versions, or process pixels and publish a smaller message as a result- perhaps mask out a color or brightness level mask in the first step, then publish a simplified contour of the masked region in the next node
@@ -52,3 +52,14 @@ colcon build --symlink-install --packages-skip ros1_example_pkg
 source install/local_setup.bash
 ros2 launch ros1vs2 ros1vs2.launch
 ```
+
+### zenoh
+
+Instead of using https://github.com/eclipse-zenoh/zenoh-plugin-ros1 have ros messages published directly into zenoh using serialization and deserialization.
+
+```
+rosrun ros1_example_pkg zenoh_generate_image.py
+rosrun ros1_example_pkg zenoh_image_to_contour.py
+```
+
+The ros parameter server and roscore is still used, but the actual messages go through zenoh.

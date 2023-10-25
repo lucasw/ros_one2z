@@ -43,10 +43,10 @@ class BouncingBall:
         self.vel_y = 30
 
     def update(self) -> np.array:
-        image_np = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+        image_np = 255 * np.ones((self.height, self.width, 3), dtype=np.uint8)
 
         cv2.circle(image_np, (self.x, self.y), radius=self.radius,
-                   color=(200, 190, 180), thickness=-1)
+                   color=(100, 90, 80), thickness=-1)
         self.x, self.vel_x = update_value(self.x, self.vel_x, 0, self.width, self.radius)
         self.y, self.vel_y = update_value(self.y, self.vel_y, 0, self.height, self.radius)
         return image_np

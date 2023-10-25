@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             "generate_image = ros2_example_pkg.generate_image:main",
             "image_to_contour = ros2_example_pkg.image_to_contour:main",
+            "msg_age = ros2_example_pkg.msg_age:main",
             "process_image = ros2_example_pkg.process_image:main",
         ],
     },

@@ -1,0 +1,16 @@
+<launch>
+  <!--
+    ros2 launch ros2_example_pkg example_launch.xml
+  -->
+
+  <node name="generate_image" pkg="ros2_example_pkg" exec="generate_image">
+  </node>
+
+  <node name="process_image" pkg="ros2_example_pkg" exec="process_image">
+  </node>
+
+  <node name="image_to_contour" pkg="ros2_example_pkg" exec="image_to_contour">
+    <remap from="image" to="modified_image" />
+  </node>
+
+</launch>

@@ -4,6 +4,9 @@
   -->
 
   <node name="generate_image" pkg="ros2_example_pkg" exec="generate_image">
+    <param name="width" value="320" />
+    <param name="height" value="200" />
+    <param name="radius" value="32" />
   </node>
 
   <node name="process_image" pkg="ros2_example_pkg" exec="process_image">

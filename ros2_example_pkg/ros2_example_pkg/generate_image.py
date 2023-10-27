@@ -33,14 +33,16 @@ def update_value(value: float, velocity: float, min_value: float, max_value: flo
 
 
 class BouncingBall:
-    def __init__(self):
-        self.width = 2048
-        self.height = 1024
-        self.radius = 64
-        self.x = 100
-        self.y = 120
-        self.vel_x = 14
-        self.vel_y = 30
+    def __init__(self, logger: rclpy.impl.rcutils_logger.RcutilsLogger,
+                 width=540, height=480, radius=32, x=50, y=50, vel_x=8, vel_y=16):
+        self.width = width
+        self.height = height
+        self.radius = radius
+        self.x = x
+        self.y = y
+        self.vel_x = vel_x
+        self.vel_y = vel_y
+        logger.info(f"{width}x{height} {radius}, {x} {y}, {vel_x} {vel_y}")
 
     def update(self) -> np.array:
         image_np = 255 * np.ones((self.height, self.width, 3), dtype=np.uint8)
@@ -55,10 +57,28 @@ class BouncingBall:
 class GenerateImage(Node):
     def __init__(self):
         super().__init__("generate_image")
+
+        self.declare_parameter("width", 2048)
+        self.declare_parameter("height", 1024)
+        self.declare_parameter("radius", 64)
+        self.declare_parameter("x", 100)
+        self.declare_parameter("y", 120)
+        self.declare_parameter("vel_x", 10)
+        self.declare_parameter("vel_y", 14)
+
         self.publisher = self.create_publisher(Image, "image", 4)
 
         self.cv_bridge = CvBridge()
-        self.bouncing_ball = BouncingBall()
+        self.bouncing_ball = BouncingBall(
+            logger=self.get_logger(),
+            width=self.get_parameter("width").value,
+            height=self.get_parameter("height").value,
+            radius=self.get_parameter("radius").value,
+            x=self.get_parameter("x").value,
+            y=self.get_parameter("y").value,
+            vel_x=self.get_parameter("vel_x").value,
+            vel_y=self.get_parameter("vel_y").value,
+        )
 
         period = 0.0333  # seconds
         self.timer = self.create_timer(period, self.update)

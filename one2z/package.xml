@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>one2z</name>
+  <version>0.0.0</version>
+  <description>Utilities for working with ros1 with mcap and zenoh</description>
+
+  <maintainer email="wsacul@gmail.com">Lucas Walter</maintainer>
+
+  <license>BSD3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>roslint</build_depend>
+  <build_depend>topic_tools</build_depend>
+
+  <exec_depend>rospy</exec_depend>
+
+  <export>
+  </export>
+</package>

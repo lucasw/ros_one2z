@@ -63,3 +63,24 @@ rosrun ros1_example_pkg zenoh_image_to_contour.py
 ```
 
 The ros parameter server and roscore is still used, but the actual messages go through zenoh.
+
+# ros1 mcap direct recording and playback
+
+(inside a venv in Ubuntu 23.04 and later)
+
+```
+pip install mcap mcap-ros1-support
+```
+
+Create a test mcap (in C++):
+```
+rosrun one2z mcap_recorder
+```
+
+(it will be adapted to record from a single topic of any type later, currently it creates Float64 messages internally)
+
+
+Play back an mcap (should work with any with ros1 messages in it):
+```
+rosrun one2z ros1_play_mcap.py test.mcap
+```

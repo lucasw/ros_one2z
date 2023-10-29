@@ -1,6 +1,6 @@
 /*
  * Copyright 2023 Lucas Walter
- * Read ros1 encoded messages out of an mcap file and publish them
+ * Example of a taking a set ros message and writing it into an mcap
  */
 
 #define MCAP_IMPLEMENTATION
@@ -18,10 +18,10 @@ mcap::Timestamp mcap_now() {
                            std::chrono::system_clock::now().time_since_epoch()).count());
 }
 
-class McapRecorder
+class MsgToMcap
 {
 public:
-  McapRecorder() : nh_("~")
+  MsgToMcap() : nh_("~")
   {
     std::string output_file = "output.mcap";
     nh_.getParam("file", output_file);
@@ -94,9 +94,9 @@ private:
 
 int main(int argc, char* argv[])
 {
-  ros::init(argc, argv, "mcap_recorder");
+  ros::init(argc, argv, "msg_to_mcap");
 
-  McapRecorder mcap_recorder;
+  MsgToMcap msg_to_mcap;
 
   return 0;
 }

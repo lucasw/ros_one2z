@@ -27,8 +27,8 @@ find_library(LZ4_LIBRARY
 
 find_package(zstd REQUIRED)
 
-add_executable(mcap_recorder src/mcap_recorder.cpp)
-target_link_libraries(mcap_recorder
+add_executable(msg_to_mcap src/msg_to_mcap.cpp)
+target_link_libraries(msg_to_mcap
   ${LZ4_LIBRARY}
   ${catkin_LIBRARIES}
   zstd::libzstd_shared
@@ -42,7 +42,7 @@ install(PROGRAMS
 )
 
 install(TARGETS
-  mcap_recorder
+  msg_to_mcap
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

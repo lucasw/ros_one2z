@@ -34,6 +34,13 @@ target_link_libraries(msg_to_mcap
   zstd::libzstd_shared
 )
 
+add_executable(topic_to_mcap src/topic_to_mcap.cpp)
+target_link_libraries(topic_to_mcap
+  ${LZ4_LIBRARY}
+  ${catkin_LIBRARIES}
+  zstd::libzstd_shared
+)
+
 # TODO install scripts
 
 install(PROGRAMS
@@ -43,6 +50,7 @@ install(PROGRAMS
 
 install(TARGETS
   msg_to_mcap
+  topic_to_mcap
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

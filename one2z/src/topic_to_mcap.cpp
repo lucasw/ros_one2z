@@ -11,6 +11,7 @@
 #include <topic_tools/shape_shifter.h>
 
 #include <fstream>
+#include <signal.h>
 #include <string>
 #include <vector>
 
@@ -47,6 +48,12 @@ public:
     writer_.close();
   }
 
+  static bool do_shutdown;  // = false;
+  static void shutdown(int sig)
+  {
+    do_shutdown = true;
+  }
+
 private:
 
   // Adapted from rosbag recorder.cpp
@@ -69,6 +76,11 @@ private:
 
   void callback(const ros::MessageEvent<topic_tools::ShapeShifter const>& msg_event, const std::string& topic)
   {
+    // TODO(lucasw) will only shutdown if receiving new topics, need a timer update to detect shutdown otherwise
+    if (do_shutdown) {
+      internal_shutdown();
+      return;
+    }
     // https://wiki.ros.org/roscpp/Overview/MessagesSerializationAndAdaptingTypes
     // see ros_comm/tools/rosbag/src/player.cpp and recorder.cpp
     // TODO(lucasw) make sure there isn't any/much cost in getting this message
@@ -116,15 +128,15 @@ private:
       return;
     }
     ROS_INFO_STREAM_THROTTLE(2.0, "writing id " << channel_id_ << ", " << length << " bytes, count " << count_);
+    count_++;
+  }
 
-    // TODO(lucasw) ctrl-c results in a segfault (in every C++ ros node), need to catch
-    // that and shut down the writer cleanly, but for testing doing this after getting this many messages
-    if (count_++ > 50) {
-      ROS_INFO_STREAM("done, shutting down writer");
-      sub_.shutdown();
-      writer_.close();
-      ros::shutdown();
-    }
+  void internal_shutdown()
+  {
+    ROS_INFO_STREAM("done, shutting down writer");
+    sub_.shutdown();
+    writer_.close();
+    ros::shutdown();
   }
 
   ros::NodeHandle nh_;
@@ -138,11 +150,17 @@ private:
   uint16_t channel_id_;
 };
 
+bool TopicToMcap::do_shutdown = false;
+
 int main(int argc, char* argv[])
 {
-  ros::init(argc, argv, "topic_to_mcap");
+  ros::init(argc, argv, "topic_to_mcap", ros::init_options::NoSigintHandler);
 
   TopicToMcap topic_to_mcap;
+
+  // TODO(lucasw) ctrl-c results in a segfault (in every C++ ros node), need to catch
+  // that and shut down the writer cleanly, but for testing doing this after getting this many messages
+  signal(SIGINT, topic_to_mcap.shutdown);
 
   ros::spin();
 

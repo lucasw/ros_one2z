@@ -6,6 +6,7 @@
 #define MCAP_IMPLEMENTATION
 #include <mcap/writer.hpp>
 #include <ros/ros.h>
+#include <ros/xmlrpc_manager.h>
 // #include <ros_type_introspection/ros_introspection.hpp>
 #include <std_msgs/Float64.h>
 #include <topic_tools/shape_shifter.h>
@@ -52,6 +53,24 @@ public:
   static void shutdown(int sig)
   {
     do_shutdown = true;
+  }
+
+  // Replacement "shutdown" XMLRPC callback
+  // https://robotics.stackexchange.com/questions/37902/
+  //   what-is-the-correct-way-to-do-stuff-before-a-node-is-shutdown
+  static void xmlrpcShutdown(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
+  {
+    int num_params = 0;
+    if (params.getType() == XmlRpc::XmlRpcValue::TypeArray) {
+      num_params = params.size();
+    }
+    if (num_params > 1) {
+      std::string reason = params[1];
+      ROS_WARN("Shutdown request received. Reason: [%s]", reason.c_str());
+      do_shutdown = 1;
+    }
+
+    result = ros::xmlrpc::responseInt(1, "", 0);
   }
 
 private:
@@ -161,6 +180,10 @@ int main(int argc, char* argv[])
   // TODO(lucasw) ctrl-c results in a segfault (in every C++ ros node), need to catch
   // that and shut down the writer cleanly, but for testing doing this after getting this many messages
   signal(SIGINT, topic_to_mcap.shutdown);
+
+  // Override XMLRPC shutdown for rosnode kill
+  ros::XMLRPCManager::instance()->unbind("shutdown");
+  ros::XMLRPCManager::instance()->bind("shutdown", topic_to_mcap.xmlrpcShutdown);
 
   ros::spin();
 

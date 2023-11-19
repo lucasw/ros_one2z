@@ -46,21 +46,24 @@ def update_value(value: float, velocity: float, min_value: float, max_value: flo
     return value, velocity
 
 
+# TODO(lucasw) nearly the same as ros2_example_pkg generate_image.py version
 class BouncingBall:
-    def __init__(self):
-        self.width = 2048
-        self.height = 1024
-        self.radius = 64
-        self.x = 100
-        self.y = 120
-        self.vel_x = 14
-        self.vel_y = 30
+    def __init__(self, loginfo,
+                 width=540, height=480, radius=32, x=50, y=50, vel_x=8, vel_y=16):
+        self.width = width
+        self.height = height
+        self.radius = radius
+        self.x = x
+        self.y = y
+        self.vel_x = vel_x
+        self.vel_y = vel_y
+        loginfo(f"{width}x{height} {radius}, {x} {y}, {vel_x} {vel_y}")
 
     def update(self) -> np.array:
         image_np = np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
         cv2.circle(image_np, (self.x, self.y), radius=self.radius,
-                   color=(200, 190, 180), thickness=-1)
+                   color=(100, 90, 80), thickness=-1)
         self.x, self.vel_x = update_value(self.x, self.vel_x, 0, self.width, self.radius)
         self.y, self.vel_y = update_value(self.y, self.vel_y, 0, self.height, self.radius)
         return image_np

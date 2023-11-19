@@ -17,7 +17,11 @@ class GenerateImage:
         self.publisher = rospy.Publisher("image", Image, queue_size=4)
 
         self.cv_bridge = CvBridge()
-        self.bouncing_ball = BouncingBall()
+
+        width = rospy.get_param("~width")
+        height = rospy.get_param("~height")
+        radius = rospy.get_param("~radius")
+        self.bouncing_ball = BouncingBall(loginfo=rospy.loginfo, width=width, height=height, radius=radius)
 
         period = 0.0333  # seconds
         self.timer = rospy.Timer(rospy.Duration(period), self.update)

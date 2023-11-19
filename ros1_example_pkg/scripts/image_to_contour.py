@@ -20,6 +20,7 @@ class ImageToContour():
         self.cv_bridge = CvBridge()
 
         self.subscriber = rospy.Subscriber("image", Image, self.image_callback, queue_size=4)
+        rospy.loginfo("image to contour")
 
     def image_callback(self, image_msg: Image):
         t0 = rospy.Time.now()

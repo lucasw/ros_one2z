@@ -8,7 +8,14 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
 )
 
+# this doesn't get the include path
+# need to provide that with catkin build ros1_example_pkg --cmake-args -DCMAKE_CXX_FLAGS=-I$DEST/include
+# find_package(zenohcxx REQUIRED COMPONENTS zenohcxx_zenohc_lib)
+find_package(zenohcxx REQUIRED COMPONENTS zenohcxx::zenohc::lib)
 # find_package(zenohcxx REQUIRED)
+
+# find_package(PkgConfig)
+# pkg_check_modules(zenohcxx REQUIRED)
 
 set(ROSLINT_CPP_OPTS
   "--extensions=cpp,h,hpp" "--filter=-whitespace/braces,-runtime/references,-build/c++11"
@@ -24,8 +31,11 @@ include_directories(
 add_executable(generate_image src/generate_image.cpp)
 target_link_libraries(generate_image ${catkin_LIBRARIES})
 
-# add_executable(zenoh_generate_image src/zenoh_generate_image.cpp)
-# target_link_libraries(zenoh_generate_image PUBLIC zenohcxx::zenohc::lib ${catkin_LIBRARIES})
+add_executable(zenoh_generate_image src/zenoh_generate_image.cpp)
+# target_link_libraries(zenoh_generate_image PUBLIC zenohc ${catkin_LIBRARIES})
+# target_link_libraries(zenoh_generate_image PUBLIC zenohcxx_zenohc_lib ${catkin_LIBRARIES})
+# this doesn't work
+target_link_libraries(zenoh_generate_image PUBLIC zenohcxx::zenohc::lib ${catkin_LIBRARIES})
 
 # TODO install scripts
 

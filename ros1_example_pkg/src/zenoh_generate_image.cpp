@@ -7,10 +7,11 @@
 #include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
-#include <zenoh.hxx>
 
-using namespace zenoh;
+#include <zenohc.hxx>
+using namespace zenohc;
 
+// #include <zenoh.hxx>
 
 void update_value(float& value, float& velocity,
                   float min_value, float max_value, const float margin = 0)
@@ -56,9 +57,13 @@ private:
 class GenerateImage
 {
 public:
-  GenerateImage() : private_nh_("~")
+  GenerateImage(z_owned_config_t& config) :
+    private_nh_("~"),
+    session_(expect<Session>(open(std::move(config))))
   {
     image_pub_ = nh_.advertise<sensor_msgs::Image>("image", 4);
+
+    ROS_INFO_STREAM("opened " << session_.info_zid());
 
     double period = 0.033;
     private_nh_.getParam("period", period);
@@ -81,12 +86,16 @@ private:
   ros::Timer timer_;
   ros::Publisher image_pub_;
 
+  Session session_;
+
   BouncingBall bouncing_ball_;
 };
 
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "generate_image");
-  GenerateImage generate_image;
+  z_owned_config_t config = z_config_default();
+  ROS_INFO_STREAM("opening zeno session");
+  GenerateImage generate_image(config);
   ros::spin();
 }

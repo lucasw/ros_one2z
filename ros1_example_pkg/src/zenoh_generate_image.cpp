@@ -4,14 +4,21 @@
  * Generate an image and publish it in ros
  */
 
+#include <utility>
+
 #include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
 #include <zenohc.hxx>
-using namespace zenohc;
 
-// #include <zenoh.hxx>
+using zenohc::Publisher;
+using zenohc::PublisherPutOptions;
+using zenohc::Session;
+using zenohc::Shmbuf;
+using zenohc::ShmManager;
+using zenohc::expect;
+using zenohc::open;
 
 void update_value(float& value, float& velocity,
                   float min_value, float max_value, const float margin = 0)
@@ -92,7 +99,7 @@ public:
     // options.set_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN);
 
     const auto length = ros::serialization::serializationLength(*image_msg);
-    auto shmbuf = expect<z::Shmbuf>(z_manager_->alloc(length));
+    auto shmbuf = expect<Shmbuf>(z_manager_->alloc(length));
 
     // std::vector<uint8_t> buffer(length);
     // ros::serialization::OStream ostream(&buffer[0], length);
@@ -114,7 +121,8 @@ private:
 
   Session* z_session_;
   // get this error if z_manager_ is uncommented:
-  //  error: use of deleted function ‘zenohc::ShmManager::ShmManager() [inherited from zenohcxx::Owned<zc_owned_shm_manager_t>]’
+  //  error: use of deleted function ‘zenohc::ShmManager::ShmManager()
+  //    [inherited from zenohcxx::Owned<zc_owned_shm_manager_t>]’
   ShmManager* z_manager_;
   Publisher z_pub_;
 

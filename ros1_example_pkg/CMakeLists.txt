@@ -43,6 +43,7 @@ target_link_libraries(zenoh_generate_image PUBLIC zenohc::lib ${catkin_LIBRARIES
 
 install(TARGETS
   generate_image
+  zenoh_generate_image
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

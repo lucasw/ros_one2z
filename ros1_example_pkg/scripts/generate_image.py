@@ -18,9 +18,9 @@ class GenerateImage:
 
         self.cv_bridge = CvBridge()
 
-        width = rospy.get_param("~width")
-        height = rospy.get_param("~height")
-        radius = rospy.get_param("~radius")
+        width = rospy.get_param("~width", 640)
+        height = rospy.get_param("~height", 360)
+        radius = rospy.get_param("~radius", 16)
         self.bouncing_ball = BouncingBall(loginfo=rospy.loginfo, width=width, height=height, radius=radius)
 
         period = 0.0333  # seconds
@@ -35,11 +35,12 @@ class GenerateImage:
         msg.header.frame_id = "map"
         self.publisher.publish(msg)
         t1 = rospy.Time.now()
-        rospy.loginfo_throttle(2.0, f"{(t1 - t0).to_sec():0.3f}s")
+        rospy.loginfo_throttle(2.0, f"update {(t1 - t0).to_sec():0.3f}s")
 
 
 def main():
     rospy.init_node("image_to_contour")
+
     _ = GenerateImage()
     rospy.spin()
 

@@ -37,9 +37,12 @@ class ImageSub:
         self.sub = session.declare_subscriber(key, self.listener, reliability=Reliability.RELIABLE())
 
     def listener(self, sample: Sample):
-        # text = f"kind: {sample.kind}, key: {sample.key_expr}"
-        # rospy.loginfo_throttle(1.0, text)
+        text = f"encoding: '{sample.encoding}' {sample.key_expr} {sample.kind} "
+        text += f"{len(sample.payload)}"
+        rospy.loginfo_throttle(1.0, text)
 
+        # TODO(lucasw) it would be nice if the message type was stored
+        # in zenoh somewhere
         image_msg = Image()
         image_msg.deserialize(sample.payload)
         t0 = rospy.Time.now()
@@ -54,7 +57,9 @@ class ImageSub:
 
         t1 = rospy.Time.now()
         age = t0 - image_msg.header.stamp
-        rospy.loginfo_throttle(1.0, f"msg {age.to_sec():0.3f}s old, processing {(t1 - t0).to_sec():0.3f}s")
+        text = f"{image_msg.width}x{image_msg.height} "
+        text += f"msg {age.to_sec():0.3f}s old, processing {(t1 - t0).to_sec():0.3f}s"
+        rospy.loginfo_throttle(1.0, text)
 
     def __del__(self):
         pass
@@ -105,7 +110,9 @@ def main():
 
     rospy.init_node("zenoh_image_sub")
 
-    rospy.loginfo("Opening session...")
+    rospy.loginfo(args)
+
+    rospy.loginfo(f"Opening zenoh session with config {conf}")
     session = zenoh.open(conf)
     z_info = session.info()
     rospy.loginfo(f"peers: {z_info.peers_zid()}, routers: {z_info.routers_zid()} {z_info.session} {z_info.zid()}")

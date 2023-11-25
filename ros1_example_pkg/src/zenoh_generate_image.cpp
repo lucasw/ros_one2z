@@ -12,6 +12,8 @@
 
 #include <zenohc.hxx>
 
+using zenohc::Encoding;
+using zenohc::EncodingPrefix;
 using zenohc::Publisher;
 using zenohc::PublisherPutOptions;
 using zenohc::Session;
@@ -96,7 +98,19 @@ public:
     // image_pub_.publish(image_msg);
 
     PublisherPutOptions options;
-    // options.set_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN);
+    Encoding encoding;
+    // TODO(lucasw) is the encoding string sent every single message?
+    // would rather set it somewhere like a rosparam for the entire channel
+    // (though a competing publisher may send the wrong type),
+    // subscriber can get it once and assume all following messages are same type
+    encoding.set_prefix(
+      EncodingPrefix::Z_ENCODING_PREFIX_APP_OCTET_STREAM).set_suffix(
+      "Image");
+      // this is too long
+      // ros::message_traits::Definition<sensor_msgs::Image>::value());
+    ROS_INFO_STREAM_ONCE(encoding.get_suffix().as_string_view());
+
+    options.set_encoding(encoding);
 
     const auto length = ros::serialization::serializationLength(*image_msg);
     auto shmbuf = expect<Shmbuf>(z_manager_->alloc(length));
@@ -110,7 +124,8 @@ public:
     auto payload = shmbuf.into_payload();
     z_pub_.put_owned(std::move(payload), options);
 
-    ROS_INFO_STREAM_THROTTLE(2.0, "published image of length: " << length);
+    ROS_INFO_STREAM_THROTTLE(2.0, "published '" << "Image"
+        << "' of length: " << length);
   }
 
 private:

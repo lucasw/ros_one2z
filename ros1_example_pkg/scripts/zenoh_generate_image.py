@@ -32,7 +32,7 @@ class GenerateImage:
         self.pub = session.declare_publisher(key)
 
         self.cv_bridge = CvBridge()
-        self.bouncing_ball = BouncingBall()
+        self.bouncing_ball = BouncingBall(loginfo=rospy.loginfo)
 
         period = 0.0333
         self.timer = rospy.Timer(rospy.Duration(period), self.update)
@@ -48,6 +48,8 @@ class GenerateImage:
 
         buff = BytesIO()
         msg.serialize(buff)
+        rospy.loginfo_throttle(1.0, f"put {buff.getbuffer().nbytes} bytes on {self.pub}")
+
         self.pub.put(buff.getvalue())
 
         # image_bytes = image_np.tobytes()
@@ -55,7 +57,7 @@ class GenerateImage:
         # rospy.loginfo_throttle(1.0, f"{len(image_bytes)} -> {len(np.frombuffer(image_bytes))}")
 
         t1 = rospy.Time.now()
-        rospy.loginfo_throttle(2.0, f"{(t1 - t0).to_sec():0.3f}s")
+        rospy.loginfo_throttle(2.0, f"pub {(t1 - t0).to_sec():0.3f}s")
 
     def __del__(self):
         rospy.loginfo("undeclaring publisher")
@@ -104,7 +106,7 @@ def main():
 
     rospy.init_node("generate_image")
 
-    rospy.loginfo("Opening session...")
+    rospy.loginfo(f"Opening zenoh session with config {conf}")
     session = zenoh.open(conf)
     z_info = session.info()
     rospy.loginfo(f"peers: {z_info.peers_zid()}, routers: {z_info.routers_zid()} {z_info.session} {z_info.zid()}")

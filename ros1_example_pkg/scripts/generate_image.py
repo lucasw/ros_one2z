@@ -18,9 +18,9 @@ class GenerateImage:
 
         self.cv_bridge = CvBridge()
 
-        width = rospy.get_param("~width", 640)
-        height = rospy.get_param("~height", 360)
-        radius = rospy.get_param("~radius", 16)
+        width = rospy.get_param("~width", 540)
+        height = rospy.get_param("~height", 480)
+        radius = rospy.get_param("~radius", 8)
         self.bouncing_ball = BouncingBall(loginfo=rospy.loginfo, width=width, height=height, radius=radius)
 
         period = 0.0333  # seconds
@@ -35,7 +35,8 @@ class GenerateImage:
         msg.header.frame_id = "map"
         self.publisher.publish(msg)
         t1 = rospy.Time.now()
-        rospy.loginfo_throttle(2.0, f"update {(t1 - t0).to_sec():0.3f}s")
+        text = f"image {image_np.shape} {len(msg.data)} update {(t1 - t0).to_sec():0.3f}s"
+        rospy.loginfo_throttle(2.0, text)
 
 
 def main():

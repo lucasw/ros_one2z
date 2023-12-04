@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    Generate an image of a bouncing ball, and find the contour of it and publish as Polygon
+    roslaunch ros1_example_pkg example.launch
+  -->
+
+  <node name="generate_image" pkg="ros1_example_pkg" type="generate_image.py"
+      output="screen">
+    <param name="width" value="320" />
+    <param name="height" value="200" />
+    <param name="radius" value="32" />
+  </node>
+
+  <!--
+  <node name="process_image" pkg="ros1_example_pkg" type="process_image">
+  </node>
+  -->
+
+  <node name="image_to_contour" pkg="ros1_example_pkg" type="image_to_contour.py"
+      output="screen">
+    <!--remap from="image" to="modified_image" /-->
+  </node>
+
+</launch>

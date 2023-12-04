@@ -55,6 +55,38 @@ ros2 launch ros1vs2 ros1vs2.launch
 
 ### zenoh
 
+#### install
+
+```
+cd ~/other/src/zenoh
+git clone git@github.com:eclipse-zenoh/zenoh-c.git
+cd ~/other/build
+mkdir build/zenoh-c
+cd zenoh-c
+cmake ../../src/zenoh/zenoh-c -DCMAKE_INSTALL_PREFIX=$DEST -DCMAKE_BUILD_TYPE=Release
+cmake --build . --target install
+```
+
+```
+cd ~/other/src/zenoh
+git clone git@github.com:eclipse-zenoh/zenoh-cpp.git
+cd ~/other/build
+mkdir zenoh-cpp
+cd zenoh-cpp
+cmake ../../src/zenoh/zenoh-cpp/install -DCMAKE_INSTALL_PREFIX=$DEST -DCMAKE_BUILD_TYPE=Release
+make
+make install
+```
+
+Then when catkin building:
+
+```
+catkin config --cmake-args -DCMAKE_CXX_FLAGS=-I$DEST/include
+catkin build one2z ros1_example_pkg
+```
+
+#### examples
+
 Instead of using https://github.com/eclipse-zenoh/zenoh-plugin-ros1 have ros messages published directly into zenoh using serialization and deserialization.
 
 ```

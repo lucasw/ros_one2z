@@ -74,7 +74,6 @@ public:
   }
 
 private:
-
   // Adapted from rosbag recorder.cpp
   void subscribe(const std::string& topic) {
     ROS_INFO("Subscribing to %s", topic.c_str());

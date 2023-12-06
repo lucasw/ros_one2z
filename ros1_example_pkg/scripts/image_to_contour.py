@@ -34,7 +34,7 @@ class ImageToContour():
 
 
 def main():
-    rospy.init_node("generate_image")
+    rospy.init_node("image_to_contour")
     _ = ImageToContour()
     rospy.spin()
 

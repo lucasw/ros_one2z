@@ -116,3 +116,88 @@ Play back an mcap (should work with any with ros1 messages in it):
 ```
 rosrun one2z ros1_play_mcap.py test.mcap
 ```
+
+# ros_comm with zenoh
+
+Publish and receive through ros_comm altered to use zenoh:
+
+https://github.com/lucasw/ros_comm/tree/zenoh_pub_sub
+
+## setup
+
+If using debian ros packages:
+
+```
+sudo apt install libsensor-msgs-dev libcv-bridge-dev
+```
+
+Need mcap headers
+
+```
+cd ~/other/src
+git clone git@github.com:foxglove/mcap.git
+cd $DEST/include
+ln -s ~/other/src/mcap/cpp/mcap/include/mcap
+```
+
+repos.yaml:
+```
+repositories:
+  ros_comm:
+    type: git
+    url: git@github.com:lucasw/ros_comm
+    version: zenoh_pub_sub
+
+  ros_one2z:
+    type: git
+    url: git@github.com:lucasw/ros_one2z
+    version: main
+
+  ros/roslint:
+    type: git
+    url: git@github.com:lucasw/roslint
+    version: add_headers_to_valid_extensions
+
+  vision_opencv:
+    type: git
+    url: git@github.com:ros-perception/vision_opencv.git
+    version: noetic
+```
+
+```
+mkdir ~/ros/ros1_zenoh/src -p
+cd ~/ros/ros1_zenoh/src
+vcs import -i repos.yaml
+```
+
+```
+cd ~/ros/ros1_zenoh
+virtualenv --system-site-packages .
+source bin/activate
+pip install eclipse-zenoh
+pip install mcap mcap-ros1-support
+```
+
+```
+cd ~/ros/ros1_zenoh
+source bin/activate
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=$DEST/include -Wno-deprecated
+catkin build
+source devel/setup.bash
+```
+
+(Could add `source devel/setup.bash` to end of `bin/activate`)
+
+## python ros_comm-zenoh to bare zenoh example
+
+```
+roscore
+```
+```
+rosrun ros1_example_pkg generate_image.py
+```
+```
+rosrun ros1_example_pkg zenoh_image_to_contour.py
+```
+
+And the zenoh_image_to_contour stdout should show that it is receiving an image.

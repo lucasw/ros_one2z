@@ -31,6 +31,7 @@ catkin_package()
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  include
 )
 
 add_executable(generate_image src/generate_image.cpp)

@@ -10,13 +10,13 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
-#include <zenohc.hxx>
+#include <zenoh.hxx>
 
-using zenohc::Publisher;
-using zenohc::PublisherPutOptions;
-using zenohc::Session;
-using zenohc::ShmManager;
-using zenohc::expect;
+using zenoh::Publisher;
+using zenoh::PublisherPutOptions;
+using zenoh::Session;
+using zenoh::ShmManager;
+using zenoh::expect;
 
 
 void update_value(float& value, float& velocity,

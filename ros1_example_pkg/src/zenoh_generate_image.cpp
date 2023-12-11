@@ -12,12 +12,12 @@
 
 #include <ros1_example_pkg/zenoh_generate_image.hpp>
 
-using zenohc::Encoding;
-using zenohc::EncodingPrefix;
-using zenohc::PublisherPutOptions;
-using zenohc::ShmManager;
-using zenohc::Shmbuf;
-using zenohc::open;
+using zenoh::Encoding;
+using zenoh::EncodingPrefix;
+using zenoh::PublisherPutOptions;
+using zenoh::ShmManager;
+using zenoh::Shmbuf;
+using zenoh::open;
 
 
 void GenerateImage::update(const ros::TimerEvent& event)
@@ -62,7 +62,7 @@ void GenerateImage::update(const ros::TimerEvent& event)
 
 int main(int argc, char* argv[])
 {
-  ros::init(argc, argv, "generate_image");
+  ros::init(argc, argv, "zenoh_generate_image");
   z_owned_config_t config = z_config_default();
   ROS_INFO_STREAM("opening zeno session");
   auto z_session = expect<Session>(open(std::move(config)));

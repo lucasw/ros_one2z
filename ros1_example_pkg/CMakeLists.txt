@@ -9,15 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
-# this doesn't get the include path
-# need to provide that with catkin build ros1_example_pkg --cmake-args -DCMAKE_CXX_FLAGS=-I$DEST/include
-# find_package(zenohcxx REQUIRED COMPONENTS zenohcxx_zenohc_lib)
-# find_package(zenohcxx REQUIRED COMPONENTS zenohcxx::zenohc::lib)
-
-# finding zenohc and linking zenohc::lib below works
+# need to find zenohc for zenohcxx to work
 find_package(zenohc REQUIRED)
-# zenohcxx and zenohcxx::zenohc::lib doesn't work
-# find_package(zenohcxx REQUIRED)
+find_package(zenohcxx REQUIRED)
 
 # find_package(PkgConfig)
 # pkg_check_modules(zenohcxx REQUIRED)
@@ -38,8 +32,7 @@ add_executable(generate_image src/generate_image.cpp)
 target_link_libraries(generate_image ${catkin_LIBRARIES})
 
 add_executable(zenoh_generate_image src/zenoh_generate_image.cpp)
-target_link_libraries(zenoh_generate_image PUBLIC zenohc::lib ${catkin_LIBRARIES})
-# target_link_libraries(zenoh_generate_image PUBLIC zenohcxx::zenohc::lib ${catkin_LIBRARIES})
+target_link_libraries(zenoh_generate_image PUBLIC zenohcxx::zenohc::lib ${catkin_LIBRARIES})
 
 # TODO install scripts
 

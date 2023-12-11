@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslint
   sensor_msgs
+  std_msgs
 )
 
 # this doesn't get the include path

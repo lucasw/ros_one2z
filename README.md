@@ -73,7 +73,7 @@ git clone git@github.com:eclipse-zenoh/zenoh-cpp.git
 cd ~/other/build
 mkdir zenoh-cpp
 cd zenoh-cpp
-cmake ../../src/zenoh/zenoh-cpp/install -DCMAKE_INSTALL_PREFIX=$DEST -DCMAKE_BUILD_TYPE=Release
+cmake ../../src/zenoh/zenoh-cpp -DCMAKE_INSTALL_PREFIX=$DEST -DCMAKE_BUILD_TYPE=Release
 make
 make install
 ```

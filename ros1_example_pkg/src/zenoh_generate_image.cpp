@@ -9,24 +9,18 @@
 #include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/Float64.h>
 
 #include <ros1_example_pkg/zenoh_generate_image.hpp>
-
-// include this if not using the zenoh ros_comm
-// TODO(lucasw) have a ROS_COMM_ZENOH define to switch with
-#if 0
-namespace zenohc {
-using namespace zenohcxx;
-#include <zenohcxx/impl.hxx>
-}
-#endif
 
 
 GenerateImage::GenerateImage(zenohc::Session* z_session, zenohc::ShmManager* z_manager) :
     private_nh_("~"),
     z_session_(z_session),
     z_manager_(z_manager),
-    z_pub_(zenohc::expect<zenohc::Publisher>(z_session->declare_publisher("image")))
+    z_pub_(zenohc::expect<zenohc::Publisher>(z_session->declare_publisher("image"))),
+    test0_pub_(zenohc::expect<zenohc::Publisher>(z_session->declare_publisher("test0"))),
+    test1_pub_(zenohc::expect<zenohc::Publisher>(z_session->declare_publisher("test1")))
 {
   // image_pub_ = nh_.advertise<sensor_msgs::Image>("image", 4);
   double period = 0.033;
@@ -34,15 +28,22 @@ GenerateImage::GenerateImage(zenohc::Session* z_session, zenohc::ShmManager* z_m
   timer_ = nh_.createTimer(ros::Duration(period), &GenerateImage::update, this);
 }
 
+// TODO(lucasw) any need to change return type to avoid copies?
+template <typename M> zenohc::Payload
+  GenerateImage::ros_msg_to_payload(const boost::shared_ptr<M>& msg)
+{
+  const auto length = ros::serialization::serializationLength(*msg);
+  auto shmbuf = zenohc::expect<zenohc::Shmbuf>(z_manager_->alloc(length));
+
+  ros::serialization::OStream ostream(shmbuf.ptr(), length);
+  ros::serialization::serialize(ostream, *msg);
+
+  auto payload = shmbuf.into_payload();
+  return payload;
+}
+
 void GenerateImage::update(const ros::TimerEvent& event)
 {
-  cv_bridge::CvImage cv_image;
-  bouncing_ball_.update(cv_image.image);
-  auto image_msg = cv_image.toImageMsg();
-  image_msg->header.stamp = event.current_real;
-  image_msg->encoding = "rgb8";
-  // image_pub_.publish(image_msg);
-
   zenohc::PublisherPutOptions options;
   zenohc::Encoding encoding;
   // TODO(lucasw) is the encoding string sent every single message?
@@ -50,28 +51,32 @@ void GenerateImage::update(const ros::TimerEvent& event)
   // (though a competing publisher may send the wrong type),
   // subscriber can get it once and assume all following messages are same type
   encoding.set_prefix(
-    zenohc::EncodingPrefix::Z_ENCODING_PREFIX_APP_OCTET_STREAM).set_suffix(
-    "Image");
+    zenohc::EncodingPrefix::Z_ENCODING_PREFIX_APP_OCTET_STREAM);  // .set_suffix(
+    // "Image");
     // this is too long
     // ros::message_traits::Definition<sensor_msgs::Image>::value());
   ROS_INFO_STREAM_ONCE(encoding.get_suffix().as_string_view());
 
   options.set_encoding(encoding);
 
-  const auto length = ros::serialization::serializationLength(*image_msg);
-  auto shmbuf = zenohc::expect<zenohc::Shmbuf>(z_manager_->alloc(length));
-
-  // std::vector<uint8_t> buffer(length);
-  // ros::serialization::OStream ostream(&buffer[0], length);
-  // ros::serialization::serialize(ostream, float_msg);
-  ros::serialization::OStream ostream(shmbuf.ptr(), length);
-  ros::serialization::serialize(ostream, *image_msg);
-
-  auto payload = shmbuf.into_payload();
-  z_pub_.put_owned(std::move(payload), options);
+  cv_bridge::CvImage cv_image;
+  bouncing_ball_.update(cv_image.image);
+  auto image_msg = cv_image.toImageMsg();
+  image_msg->header.stamp = event.current_real;
+  image_msg->encoding = "rgb8";
+  z_pub_.put_owned(std::move(ros_msg_to_payload(image_msg)), options);
 
   ROS_INFO_STREAM_THROTTLE(2.0, "published '" << "Image"
-      << "' of length: " << length);
+      << ", image bytes " << image_msg->data.size()
+      << " " << image_msg->width << "x" << image_msg->height);
+
+
+  // TODO(lucasw) commingling this with image_pub publish using zenoh ros_comm is crashing
+  auto float_msg = std_msgs::Float64();
+  float_msg.data = 0.12345689101112131415;
+  test0_pub_.put_owned(std::move(ros_msg_to_payload(boost::make_shared<std_msgs::Float64>(float_msg))), options);
+  float_msg.data = 333.0333;
+  test1_pub_.put_owned(std::move(ros_msg_to_payload(boost::make_shared<std_msgs::Float64>(float_msg))), options);
 }
 
 int main(int argc, char* argv[])

@@ -28,7 +28,8 @@ public:
   GenerateImage() : private_nh_("~")
   {
     image_pub_ = nh_.advertise<sensor_msgs::Image>("image", 4);
-    test_pub_ = nh_.advertise<std_msgs::Float64>("test", 4);
+    test0_pub_ = nh_.advertise<std_msgs::Float64>("test0", 4);
+    test1_pub_ = nh_.advertise<std_msgs::Float64>("test1", 4);
 
     double period = 0.033;
     private_nh_.getParam("period", period);
@@ -44,9 +45,12 @@ public:
     image_msg->encoding = "rgb8";
     image_pub_.publish(image_msg);
 
+    // TODO(lucasw) commingling this with image_pub publish using zenoh ros_comm is crashing
     auto float_msg = std_msgs::Float64();
     float_msg.data = 0.12345689101112131415;
-    test_pub_.publish(float_msg);
+    test0_pub_.publish(boost::make_shared<std_msgs::Float64>(float_msg));
+    float_msg.data = 333.0333;
+    test1_pub_.publish(float_msg);
   }
 
 private:
@@ -54,7 +58,8 @@ private:
   ros::NodeHandle private_nh_;
   ros::Timer timer_;
   ros::Publisher image_pub_;
-  ros::Publisher test_pub_;
+  ros::Publisher test0_pub_;
+  ros::Publisher test1_pub_;
 
   BouncingBall bouncing_ball_;
 };

@@ -57,8 +57,7 @@ class ImageSub:
 
         t1 = rospy.Time.now()
         age = t0 - image_msg.header.stamp
-        text = f"{image_msg.width}x{image_msg.height} "
-        text += f"msg {age.to_sec():0.3f}s old, processing {(t1 - t0).to_sec():0.3f}s"
+        text = f"msg {image_np.shape} {age.to_sec():0.3f}s old, processing {(t1 - t0).to_sec():0.3f}s"
         rospy.loginfo_throttle(1.0, text)
 
     def __del__(self):

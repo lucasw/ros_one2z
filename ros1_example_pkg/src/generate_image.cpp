@@ -9,6 +9,8 @@
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Float64.h>
 
+#include <ros1_example_pkg/bouncing_ball.hpp>
+
 // TODO(lucasw) supposed to be transparent whether ros_comm is using zenoh,
 // shouldn't leak into this and every C++, currently without this this node
 // won't link when using the zenoh ros_comm- maybe could hide something in a header?
@@ -19,46 +21,6 @@ using namespace zenohcxx;
 }
 #endif
 
-void update_value(float& value, float& velocity,
-                  float min_value, float max_value, const float margin = 0)
-{
-  // bounce when reaching limit
-  value += velocity;
-
-  min_value += margin;
-  if (value <= min_value) {
-    value = min_value;
-    velocity *= -1;
-  }
-
-  max_value -= margin;
-  if (value >= max_value) {
-    value = max_value;
-    velocity *= -1;
-  }
-}
-
-class BouncingBall
-{
-public:
-  void update(cv::Mat& image)
-  {
-    image = cv::Mat(cv::Size(width_, height_), CV_8UC3, cv::Scalar::all(0));
-    cv::circle(image, cv::Point2f(x_, y_), radius_,
-               cv::Scalar(200, 190, 180), -1);
-    update_value(x_, vel_x_, 0, width_, radius_);
-    update_value(y_, vel_y_, 0, height_, radius_);
-  }
-
-private:
-  size_t width_ = 2048;
-  size_t height_ = 1024;
-  size_t radius_ = 64;
-  float x_ = 100.0;
-  float y_ = 120.0;
-  float vel_x_ = 14.0;
-  float vel_y_ = 30.0;
-};
 
 class GenerateImage
 {

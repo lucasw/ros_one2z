@@ -12,10 +12,12 @@
 // TODO(lucasw) supposed to be transparent whether ros_comm is using zenoh,
 // shouldn't leak into this and every C++, currently without this this node
 // won't link when using the zenoh ros_comm- maybe could hide something in a header?
+#if 0
 namespace zenohc {
 using namespace zenohcxx;
 #include <zenohcxx/impl.hxx>
 }
+#endif
 
 void update_value(float& value, float& velocity,
                   float min_value, float max_value, const float margin = 0)

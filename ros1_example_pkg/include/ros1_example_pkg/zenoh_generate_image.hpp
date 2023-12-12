@@ -10,11 +10,14 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
+#include <zenohc.hxx>
+#if 0
 namespace zenohc {
   class Publisher;
   class Session;
   class ShmManager;
 }
+#endif
 
 void update_value(float& value, float& velocity,
                   float min_value, float max_value, const float margin = 0)

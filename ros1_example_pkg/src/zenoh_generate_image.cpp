@@ -14,11 +14,12 @@
 
 // include this if not using the zenoh ros_comm
 // TODO(lucasw) have a ROS_COMM_ZENOH define to switch with
-// #include <zenohc.hxx>
+#if 0
 namespace zenohc {
 using namespace zenohcxx;
 #include <zenohcxx/impl.hxx>
 }
+#endif
 
 
 GenerateImage::GenerateImage(zenohc::Session* z_session, zenohc::ShmManager* z_manager) :

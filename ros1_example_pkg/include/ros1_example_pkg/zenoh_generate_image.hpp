@@ -10,14 +10,11 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 
-#include <zenoh.hxx>
-
-using zenoh::Publisher;
-using zenoh::PublisherPutOptions;
-using zenoh::Session;
-using zenoh::ShmManager;
-using zenoh::expect;
-
+namespace zenohc {
+  class Publisher;
+  class Session;
+  class ShmManager;
+}
 
 void update_value(float& value, float& velocity,
                   float min_value, float max_value, const float margin = 0)
@@ -73,17 +70,7 @@ private:
 class GenerateImage
 {
 public:
-  GenerateImage(Session* z_session, ShmManager* z_manager) :
-    private_nh_("~"),
-    z_session_(z_session),
-    z_manager_(z_manager),
-    z_pub_(expect<Publisher>(z_session->declare_publisher("image")))
-  {
-    // image_pub_ = nh_.advertise<sensor_msgs::Image>("image", 4);
-    double period = 0.033;
-    private_nh_.getParam("period", period);
-    timer_ = nh_.createTimer(ros::Duration(period), &GenerateImage::update, this);
-  }
+  GenerateImage(zenohc::Session* z_session, zenohc::ShmManager* z_manager);
 
   void update(const ros::TimerEvent& event);
 
@@ -93,12 +80,12 @@ private:
   ros::Timer timer_;
   // ros::Publisher image_pub_;
 
-  Session* z_session_;
+  zenohc::Session* z_session_;
   // get this error if z_manager_ is uncommented:
   //  error: use of deleted function ‘zenohc::ShmManager::ShmManager()
   //    [inherited from zenohcxx::Owned<zc_owned_shm_manager_t>]’
-  ShmManager* z_manager_;
-  Publisher z_pub_;
+  zenohc::ShmManager* z_manager_;
+  zenohc::Publisher z_pub_;
 
   BouncingBall bouncing_ball_;
 };

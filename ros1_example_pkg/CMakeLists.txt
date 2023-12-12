@@ -29,7 +29,7 @@ include_directories(
 )
 
 add_executable(generate_image src/generate_image.cpp)
-target_link_libraries(generate_image ${catkin_LIBRARIES})
+target_link_libraries(generate_image zenohcxx::zenohc::lib ${catkin_LIBRARIES})
 
 add_executable(zenoh_generate_image src/zenoh_generate_image.cpp)
 target_link_libraries(zenoh_generate_image PUBLIC zenohcxx::zenohc::lib ${catkin_LIBRARIES})

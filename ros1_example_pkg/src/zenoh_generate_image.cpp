@@ -12,13 +12,26 @@
 
 #include <ros1_example_pkg/zenoh_generate_image.hpp>
 
-using zenoh::Encoding;
-using zenoh::EncodingPrefix;
-using zenoh::PublisherPutOptions;
-using zenoh::ShmManager;
-using zenoh::Shmbuf;
-using zenoh::open;
+// include this if not using the zenoh ros_comm
+// TODO(lucasw) have a ROS_COMM_ZENOH define to switch with
+// #include <zenohc.hxx>
+namespace zenohc {
+using namespace zenohcxx;
+#include <zenohcxx/impl.hxx>
+}
 
+
+GenerateImage::GenerateImage(zenohc::Session* z_session, zenohc::ShmManager* z_manager) :
+    private_nh_("~"),
+    z_session_(z_session),
+    z_manager_(z_manager),
+    z_pub_(zenohc::expect<zenohc::Publisher>(z_session->declare_publisher("image")))
+{
+  // image_pub_ = nh_.advertise<sensor_msgs::Image>("image", 4);
+  double period = 0.033;
+  private_nh_.getParam("period", period);
+  timer_ = nh_.createTimer(ros::Duration(period), &GenerateImage::update, this);
+}
 
 void GenerateImage::update(const ros::TimerEvent& event)
 {
@@ -29,14 +42,14 @@ void GenerateImage::update(const ros::TimerEvent& event)
   image_msg->encoding = "rgb8";
   // image_pub_.publish(image_msg);
 
-  PublisherPutOptions options;
-  Encoding encoding;
+  zenohc::PublisherPutOptions options;
+  zenohc::Encoding encoding;
   // TODO(lucasw) is the encoding string sent every single message?
   // would rather set it somewhere like a rosparam for the entire channel
   // (though a competing publisher may send the wrong type),
   // subscriber can get it once and assume all following messages are same type
   encoding.set_prefix(
-    EncodingPrefix::Z_ENCODING_PREFIX_APP_OCTET_STREAM).set_suffix(
+    zenohc::EncodingPrefix::Z_ENCODING_PREFIX_APP_OCTET_STREAM).set_suffix(
     "Image");
     // this is too long
     // ros::message_traits::Definition<sensor_msgs::Image>::value());
@@ -45,7 +58,7 @@ void GenerateImage::update(const ros::TimerEvent& event)
   options.set_encoding(encoding);
 
   const auto length = ros::serialization::serializationLength(*image_msg);
-  auto shmbuf = expect<Shmbuf>(z_manager_->alloc(length));
+  auto shmbuf = zenohc::expect<zenohc::Shmbuf>(z_manager_->alloc(length));
 
   // std::vector<uint8_t> buffer(length);
   // ros::serialization::OStream ostream(&buffer[0], length);
@@ -65,14 +78,14 @@ int main(int argc, char* argv[])
   ros::init(argc, argv, "zenoh_generate_image");
   z_owned_config_t config = z_config_default();
   ROS_INFO_STREAM("opening zeno session");
-  auto z_session = expect<Session>(open(std::move(config)));
+  auto z_session = zenohc::expect<zenohc::Session>(zenohc::open(std::move(config)));
 
   ROS_INFO_STREAM("opened zenoh session: " << z_session.info_zid());
 
   std::ostringstream oss;
   oss << z_session.info_zid();
   // May have to make this larger depending on bouncing ball width and height
-  auto z_manager = expect<ShmManager>(shm_manager_new(z_session, oss.str().c_str(),
+  auto z_manager = zenohc::expect<zenohc::ShmManager>(shm_manager_new(z_session, oss.str().c_str(),
                                                       2048 * 1024 * 3 * 4));
 
   GenerateImage generate_image(&z_session, &z_manager);

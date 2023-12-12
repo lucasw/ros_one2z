@@ -9,6 +9,13 @@
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Float64.h>
 
+// TODO(lucasw) supposed to be transparent whether ros_comm is using zenoh,
+// shouldn't leak into this and every C++, currently without this this node
+// won't link when using the zenoh ros_comm- maybe could hide something in a header?
+namespace zenohc {
+using namespace zenohcxx;
+#include <zenohcxx/impl.hxx>
+}
 
 void update_value(float& value, float& velocity,
                   float min_value, float max_value, const float margin = 0)

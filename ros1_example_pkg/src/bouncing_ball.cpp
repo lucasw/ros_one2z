@@ -10,6 +10,8 @@
 
 #include <ros1_example_pkg/bouncing_ball.hpp>
 
+#include <zenohc.hxx>
+
 void update_value(float& value, float& velocity,
                   float min_value, float max_value, const float margin)
 {

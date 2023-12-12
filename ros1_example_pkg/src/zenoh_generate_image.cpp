@@ -71,12 +71,15 @@ void GenerateImage::update(const ros::TimerEvent& event)
       << " " << image_msg->width << "x" << image_msg->height);
 
 
-  // TODO(lucasw) commingling this with image_pub publish using zenoh ros_comm is crashing
+  // TODO(lucasw) multiple calls to ros_msg_to_payload are causing the core dump,
+  // must be allocating wrong
   auto float_msg = std_msgs::Float64();
   float_msg.data = 0.12345689101112131415;
-  test0_pub_.put_owned(std::move(ros_msg_to_payload(boost::make_shared<std_msgs::Float64>(float_msg))), options);
+  const auto payload0 = ros_msg_to_payload(boost::make_shared<std_msgs::Float64>(float_msg));
+  // test0_pub_.put_owned(std::move(payload0), options);
   float_msg.data = 333.0333;
-  test1_pub_.put_owned(std::move(ros_msg_to_payload(boost::make_shared<std_msgs::Float64>(float_msg))), options);
+  const auto payload1 = ros_msg_to_payload(boost::make_shared<std_msgs::Float64>(float_msg));
+  // test0_pub_.put_owned(std::move(payload1), options);
 }
 
 int main(int argc, char* argv[])

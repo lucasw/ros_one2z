@@ -69,6 +69,12 @@ class ImageSub:
 
 
 def main():
+    rospy.init_node("zenoh_image_sub")
+    # remove _ and := args
+    sys.argv = rospy.myargv()
+    sys.argv = [x for x in sys.argv if not x.startswith("_")]
+    rospy.loginfo(sys.argv)
+
     parser = argparse.ArgumentParser(
         prog='z_pub',
         description='zenoh pub example')
@@ -107,10 +113,6 @@ def main():
     # TODO(lucasw) can I print log message to this?
     # initiate logging
     zenoh.init_logger()
-
-    rospy.init_node("zenoh_image_sub")
-
-    rospy.loginfo(args)
 
     rospy.loginfo(f"Opening zenoh session with config {conf}")
     session = zenoh.open(conf)

@@ -28,11 +28,13 @@ include_directories(
   include
 )
 
-add_executable(generate_image src/generate_image.cpp src/bouncing_ball.cpp)
-target_link_libraries(generate_image zenohcxx::zenohc::lib ${catkin_LIBRARIES})
+add_library(bouncing_ball src/bouncing_ball.cpp)
+
+add_executable(generate_image src/generate_image.cpp)
+target_link_libraries(generate_image bouncing_ball zenohcxx::zenohc::lib ${catkin_LIBRARIES})
 
 add_executable(zenoh_generate_image src/zenoh_generate_image.cpp src/bouncing_ball.cpp)
-target_link_libraries(zenoh_generate_image PUBLIC zenohcxx::zenohc::lib ${catkin_LIBRARIES})
+target_link_libraries(zenoh_generate_image PUBLIC zenohcxx::zenohc::lib ${catkin_LIBRARIES} bouncing_ball)
 
 # TODO install scripts
 

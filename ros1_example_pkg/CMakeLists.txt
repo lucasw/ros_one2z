@@ -31,16 +31,31 @@ include_directories(
 add_library(bouncing_ball src/bouncing_ball.cpp)
 
 add_executable(generate_image src/generate_image.cpp)
-target_link_libraries(generate_image bouncing_ball zenohcxx::zenohc::lib ${catkin_LIBRARIES})
+target_link_libraries(generate_image
+  ${catkin_LIBRARIES}
+  bouncing_ball
+  zenohcxx::zenohc::lib
+)
 
-add_executable(zenoh_generate_image src/zenoh_generate_image.cpp src/bouncing_ball.cpp)
-target_link_libraries(zenoh_generate_image PUBLIC zenohcxx::zenohc::lib ${catkin_LIBRARIES} bouncing_ball)
+add_executable(zenoh_generate_image src/zenoh_generate_image.cpp)
+target_link_libraries(zenoh_generate_image PUBLIC
+  ${catkin_LIBRARIES}
+  bouncing_ball
+  zenohcxx::zenohc::lib
+)
+
+add_executable(zenoh_image_to_contour src/zenoh_image_to_contour.cpp)
+target_link_libraries(zenoh_image_to_contour PUBLIC
+  ${catkin_LIBRARIES}
+  zenohcxx::zenohc::lib
+)
 
 # TODO install scripts
 
 install(TARGETS
   generate_image
   zenoh_generate_image
+  zenoh_image_to_contour
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

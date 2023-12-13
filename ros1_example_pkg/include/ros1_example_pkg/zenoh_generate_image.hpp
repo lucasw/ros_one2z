@@ -32,15 +32,12 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle private_nh_;
   ros::Timer timer_;
-  // ros::Publisher image_pub_;
 
   template <typename M> zenohc::Payload
     ros_msg_to_payload(const boost::shared_ptr<M>& msg);
 
+  // TODO(lucasw) std::shared_ptr
   zenohc::Session* z_session_;
-  // get this error if z_manager_ is uncommented:
-  //  error: use of deleted function ‘zenohc::ShmManager::ShmManager()
-  //    [inherited from zenohcxx::Owned<zc_owned_shm_manager_t>]’
   zenohc::ShmManager* z_manager_;
   zenohc::Publisher z_pub_;
   zenohc::Publisher test0_pub_;

@@ -1,8 +1,9 @@
-/*
+/**
  * Copyright 2023 Lucas Walter
- *
- * Generate an image and publish it in ros
  */
+
+#ifndef ROS1_EXAMPLE_PKG_ZENOH_GENERATE_IMAGE_HPP
+#define ROS1_EXAMPLE_PKG_ZENOH_GENERATE_IMAGE_HPP
 
 #include <utility>
 
@@ -13,13 +14,6 @@
 #include <ros1_example_pkg/bouncing_ball.hpp>
 
 #include <zenohc.hxx>
-#if 0
-namespace zenohc {
-  class Publisher;
-  class Session;
-  class ShmManager;
-}
-#endif
 
 class GenerateImage
 {
@@ -45,3 +39,5 @@ private:
 
   BouncingBall bouncing_ball_;
 };
+
+#endif  // ROS1_EXAMPLE_PKG_ZENOH_GENERATE_IMAGE_HPP

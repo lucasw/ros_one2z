@@ -11,11 +11,12 @@
 #include <sensor_msgs/Image.h>
 #include <std_msgs/Float64.h>
 
+#include <zenohc.hxx>
 
 class ImageToContour
 {
 public:
-  ImageToContour(zenohc::Session& z_session);
+  explicit ImageToContour(zenohc::Session& z_session);
 
   void sampleCallback(const zenohc::Sample& sample);
 

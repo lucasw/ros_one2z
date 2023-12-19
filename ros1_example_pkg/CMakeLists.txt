@@ -37,6 +37,12 @@ target_link_libraries(generate_image
   zenohcxx::zenohc::lib
 )
 
+add_executable(image_to_contour src/image_to_contour.cpp)
+target_link_libraries(image_to_contour
+  ${catkin_LIBRARIES}
+  zenohcxx::zenohc::lib
+)
+
 add_executable(zenoh_generate_image src/zenoh_generate_image.cpp)
 target_link_libraries(zenoh_generate_image PUBLIC
   ${catkin_LIBRARIES}

@@ -1,8 +1,9 @@
 /*
  * Copyright 2023 Lucas Walter
- *
- * Generate an image and publish it in ros
  */
+
+#ifndef ROS1_EXAMPLE_PKG_BOUNCING_BALL_HPP
+#define ROS1_EXAMPLE_PKG_BOUNCING_BALL_HPP
 
 #include <utility>
 
@@ -35,3 +36,5 @@ private:
   float vel_x_ = 14.0;
   float vel_y_ = 30.0;
 };
+
+#endif  // ROS1_EXAMPLE_PKG_BOUNCING_BALL_HPP

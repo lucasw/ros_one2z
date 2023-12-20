@@ -34,6 +34,7 @@ public:
     image_msg->header.stamp = event.current_real;
     image_msg->encoding = "rgb8";
     image_pub_.publish(image_msg);
+    ROS_INFO_STREAM("tx " << image_msg->width << "x" << image_msg->height << " " << image_msg->encoding);
 
     // TODO(lucasw) commingling this with image_pub publish using zenoh ros_comm is crashing
     auto float_msg = std_msgs::Float64();

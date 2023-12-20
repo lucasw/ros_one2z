@@ -4,12 +4,37 @@
     Generate an image of a bouncing ball, and find the contour of it and publish as Polygon
     roslaunch ros1_example_pkg example.launch
   -->
+  <arg name="period" default="0.033" />
 
-  <node name="generate_image" pkg="ros1_example_pkg" type="generate_image.py"
+  <node name="generate_image_py" pkg="ros1_example_pkg" type="generate_image.py"
+      if="false"
       output="screen">
     <param name="width" value="320" />
     <param name="height" value="200" />
     <param name="radius" value="32" />
+    <param name="period" value="$(arg period)" />
+  </node>
+
+  <node name="generate_image_cpp" pkg="ros1_example_pkg" type="generate_image"
+      if="false"
+      required="true"
+      output="screen">
+    <param name="width" value="320" />
+    <param name="height" value="200" />
+    <param name="radius" value="32" />
+    <param name="period" value="$(arg period)" />
+  </node>
+
+  <!-- TODO(lucasw) this doesn't work in combination with image_to_contour because
+    the ros_comm machinery needs to register the publisher in the subscriber -->
+  <node name="zenoh_generate_image" pkg="ros1_example_pkg" type="zenoh_generate_image"
+      if="true"
+      required="true"
+      output="screen">
+    <param name="width" value="320" />
+    <param name="height" value="200" />
+    <param name="radius" value="32" />
+    <param name="period" value="$(arg period)" />
   </node>
 
   <!--
@@ -17,7 +42,23 @@
   </node>
   -->
 
-  <node name="image_to_contour" pkg="ros1_example_pkg" type="image_to_contour.py"
+  <node name="image_to_contour_py" pkg="ros1_example_pkg" type="image_to_contour.py"
+      if="false"
+      output="screen">
+    <!--remap from="image" to="modified_image" /-->
+  </node>
+
+  <!--
+    launch-prefix="gdb -ex run - -args"
+  -->
+  <node name="image_to_contour_cpp" pkg="ros1_example_pkg" type="image_to_contour"
+      if="true"
+      output="screen">
+    <!--remap from="image" to="modified_image" /-->
+  </node>
+
+  <node name="zenoh_image_to_contour_cpp" pkg="ros1_example_pkg" type="zenoh_image_to_contour"
+      if="false"
       output="screen">
     <!--remap from="image" to="modified_image" /-->
   </node>

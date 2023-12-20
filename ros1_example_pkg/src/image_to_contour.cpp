@@ -35,7 +35,7 @@ ImageToContour::ImageToContour() :
 
 void ImageToContour::imageCallback(const sensor_msgs::ImageConstPtr& image_msg)
 {
-  ROS_INFO_STREAM(image_msg->width << "x" << image_msg->height << " " << image_msg->encoding);
+  ROS_INFO_STREAM("rx " << image_msg->width << "x" << image_msg->height << " " << image_msg->encoding);
 }
 
 int main(int argc, char* argv[])

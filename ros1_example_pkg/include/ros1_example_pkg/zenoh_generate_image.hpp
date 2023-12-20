@@ -27,6 +27,7 @@ private:
   ros::NodeHandle private_nh_;
   ros::Timer timer_;
 
+
   template <typename M> zenohc::Payload
     ros_msg_to_payload(const boost::shared_ptr<M>& msg);
 
@@ -36,6 +37,11 @@ private:
   zenohc::Publisher z_pub_;
   zenohc::Publisher test0_pub_;
   zenohc::Publisher test1_pub_;
+
+  // aren't actually publishign with these but need them if ros nodes on receiving side
+  ros::Publisher ros_image_pub_;
+  ros::Publisher ros_test0_pub_;
+  ros::Publisher ros_test1_pub_;
 
   BouncingBall bouncing_ball_;
 };

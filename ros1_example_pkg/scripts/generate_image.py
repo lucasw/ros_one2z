@@ -23,7 +23,7 @@ class GenerateImage:
         radius = rospy.get_param("~radius", 8)
         self.bouncing_ball = BouncingBall(loginfo=rospy.loginfo, width=width, height=height, radius=radius)
 
-        period = 0.0333  # seconds
+        period = rospy.get_param("~period", 0.0333)
         self.timer = rospy.Timer(rospy.Duration(period), self.update)
 
     def update(self, event: rospy.timer.TimerEvent):

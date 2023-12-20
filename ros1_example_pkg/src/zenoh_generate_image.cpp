@@ -22,6 +22,14 @@ GenerateImage::GenerateImage(zenohc::Session* z_session, zenohc::ShmManager* z_m
     test0_pub_(zenohc::expect<zenohc::Publisher>(z_session->declare_publisher("test0"))),
     test1_pub_(zenohc::expect<zenohc::Publisher>(z_session->declare_publisher("test1")))
 {
+  // TODO(lucasw) these are needed to tell a receiving ros node that these publishers exist,
+  // we won't actually use them to publish
+  ros_image_pub_ = nh_.advertise<sensor_msgs::Image>("image", 4);
+  ros_test0_pub_ = nh_.advertise<std_msgs::Float64>("test0", 4);
+  ros_test1_pub_ = nh_.advertise<std_msgs::Float64>("test1", 4);
+  // TODO(lucasw) if creating the publisher above may as well use them to get resolved names
+  // and create the zenoh publisher here after, then can use regular ros remapping
+
   // image_pub_ = nh_.advertise<sensor_msgs::Image>("image", 4);
   double period = 0.033;
   private_nh_.getParam("period", period);

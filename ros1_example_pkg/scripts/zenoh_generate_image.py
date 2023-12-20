@@ -15,6 +15,7 @@
 
 import argparse
 import json
+import sys
 from io import BytesIO
 
 # import numpy as np
@@ -22,6 +23,7 @@ import rospy
 import zenoh
 from bouncing_ball import BouncingBall
 from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
 # from zenoh import config
 
 
@@ -30,11 +32,12 @@ class GenerateImage:
         # keys in zenoh maps to topics in ros
         rospy.loginfo(f"Declaring Publisher on '{key}'...")
         self.pub = session.declare_publisher(key)
+        self.ros_image_pub = rospy.Publisher(key, Image, queue_size=1)
 
         self.cv_bridge = CvBridge()
         self.bouncing_ball = BouncingBall(loginfo=rospy.loginfo)
 
-        period = 0.0333
+        period = rospy.get_param("~period", 0.0333)
         self.timer = rospy.Timer(rospy.Duration(period), self.update)
 
     def update(self, event: rospy.timer.TimerEvent):
@@ -65,6 +68,11 @@ class GenerateImage:
 
 
 def main():
+    rospy.init_node("generate_image")
+    # remove _ and := args only for rospy init_node
+    sys.argv = rospy.myargv()
+    sys.argv = [x for x in sys.argv if not x.startswith("_")]
+
     parser = argparse.ArgumentParser(
         prog='z_pub',
         description='zenoh pub example')
@@ -103,8 +111,6 @@ def main():
     # TODO(lucasw) can I print log message to this?
     # initiate logging
     zenoh.init_logger()
-
-    rospy.init_node("generate_image")
 
     rospy.loginfo(f"Opening zenoh session with config {conf}")
     session = zenoh.open(conf)

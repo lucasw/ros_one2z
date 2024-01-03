@@ -10,8 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 # need to find zenohc for zenohcxx to work
-find_package(zenohc REQUIRED)
-find_package(zenohcxx REQUIRED)
+# find_package(zenohc REQUIRED)
+# find_package(zenohcxx REQUIRED)
 
 # find_package(PkgConfig)
 # pkg_check_modules(zenohcxx REQUIRED)
@@ -34,26 +34,25 @@ add_executable(generate_image src/generate_image.cpp)
 target_link_libraries(generate_image
   ${catkin_LIBRARIES}
   bouncing_ball
-  zenohcxx::zenohc::lib
 )
 
 add_executable(image_to_contour src/image_to_contour.cpp)
 target_link_libraries(image_to_contour
   ${catkin_LIBRARIES}
-  zenohcxx::zenohc::lib
 )
 
+# these would need zenoh lib if not using the zenoh ros_comm branch
 add_executable(zenoh_generate_image src/zenoh_generate_image.cpp)
 target_link_libraries(zenoh_generate_image PUBLIC
   ${catkin_LIBRARIES}
   bouncing_ball
-  zenohcxx::zenohc::lib
+  # zenohcxx::zenohc::lib
 )
 
 add_executable(zenoh_image_to_contour src/zenoh_image_to_contour.cpp)
 target_link_libraries(zenoh_image_to_contour PUBLIC
   ${catkin_LIBRARIES}
-  zenohcxx::zenohc::lib
+  # zenohcxx::zenohc::lib
 )
 
 # TODO install scripts

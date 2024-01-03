@@ -26,7 +26,7 @@ Then make an overlaying workspace:
 ```
 mkdir -p ~/ros/ros1_one/src
 cd ~/ros/ros1_one/src
-git clone git@github.com:lucasw/ros1vs2.git
+git clone git@github.com:lucasw/ros_one2z.git
 cd ..
 source  ~/install_base_catkin_ws/install/setup.bash
 catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -Wno-deprecated

@@ -10,6 +10,7 @@
 #include <string>
 
 #include <rclcpp/rclcpp.hpp>
+#include <rcutils/types.h>
 
 using namespace std::chrono_literals;
 
@@ -37,8 +38,6 @@ class PlayMcap : public rclcpp::Node
         std::cerr << "! " << problem.message << "\n";
       };
 
-      auto messages = reader.readMessages(onProblem);
-
       // TODO(lucasw) what method is best?
       auto status1 = reader.readSummary(mcap::ReadSummaryMethod::AllowFallbackScan);
       if (!status1.ok()) {
@@ -62,6 +61,8 @@ class PlayMcap : public rclcpp::Node
 
       RCLCPP_INFO(this->get_logger(), "Created publishers, now publishing messages...");
 
+      auto messages = reader.readMessages(onProblem);
+
       const uint64_t max_sleep = 1000000000;
       while (rclcpp::ok()) {
         mcap::Timestamp stamp;
@@ -71,8 +72,8 @@ class PlayMcap : public rclcpp::Node
           // TODO(lucasw) try except
           auto& pub = pubs[channel.topic];
 
-          // TODO Add sleep for delay between last msgVeiw.message.publishTime and this one
-          // (are all messages in publishTime order?)
+          // sleep for amount of gap between messages
+          // TODO(lucasw) are all messages in publishTime order?
           const auto cur_stamp = msgView.message.publishTime;
           auto delta_stamp = 0;
           if (cur_stamp > stamp) {
@@ -88,13 +89,21 @@ class PlayMcap : public rclcpp::Node
           }
           stamp = cur_stamp;
 
-          std::cout << stamp << "ns, delta " << delta_stamp << "ns " << channel.topic << " " << msgView.message.dataSize << " bytes\n";
-          rclcpp::SerializedMessage serialized_msg(msgView.message.dataSize);
-          // const auto buffer_begin =
-          serialized_msg.get_rcl_serialized_message().buffer;
+          // move the mcap serialized bytes into a ros2 serialized message
+          const auto msg_size = msgView.message.dataSize;
+          // std::cout << stamp << "ns, delta " << delta_stamp << "ns " << channel.topic
+          //     << " " << msg_size << " bytes\n";
+
+          rclcpp::SerializedMessage serialized_msg;
+          serialized_msg.reserve(msg_size);
+          auto& rcl_msg = serialized_msg.get_rcl_serialized_message();
           // TODO(lucasw) is this copy avoidable?
-          std::memcpy(serialized_msg.get_rcl_serialized_message().buffer,
-                      msgView.message.data, msgView.message.dataSize);
+          std::memcpy(rcl_msg.buffer,
+                      msgView.message.data, msg_size);
+          rcl_msg.buffer_length = msg_size;
+          // RCLCPP_INFO(this->get_logger(), "sizes %d %d %d", serialized_msg.capacity(),
+          //             serialized_msg.size(), msg_size);
+          // RCLCPP_INFO(this->get_logger(), "sizes %d %d", rcl_msg.buffer_length, rcl_msg.buffer_capacity);
 
           pub->publish(serialized_msg);
         }

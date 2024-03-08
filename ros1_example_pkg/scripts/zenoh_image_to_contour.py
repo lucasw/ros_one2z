@@ -34,17 +34,26 @@ class ImageSub:
         # keys in zenoh maps to topics in ros
         self.contour_pub = session.declare_publisher("contour")
         rospy.loginfo(f"Declaring Subscriber on '{key}'...")
+        self.debug_ros_pub = rospy.Publisher("image_debug", Image, queue_size=2)
         self.sub = session.declare_subscriber(key, self.listener, reliability=Reliability.RELIABLE())
 
     def listener(self, sample: Sample):
         text = f"encoding: '{sample.encoding}' {sample.key_expr} {sample.kind} "
         text += f"{len(sample.payload)}"
         rospy.loginfo_throttle(1.0, text)
+        # print(f"{len(sample.payload)} {[int(v) for v in sample.payload]}")
 
         # TODO(lucasw) it would be nice if the message type was stored
         # in zenoh somewhere
         image_msg = Image()
-        image_msg.deserialize(sample.payload)
+        try:
+            image_msg.deserialize(sample.payload)
+        except Exception as ex:
+            rospy.logwarn(ex)
+            return
+
+        self.debug_ros_pub.publish(image_msg)
+        # print(image_msg.header)
         t0 = rospy.Time.now()
         age = t0 - image_msg.header.stamp
 

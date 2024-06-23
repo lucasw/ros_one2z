@@ -1,0 +1,20 @@
+[package]
+name = "bag_odom_to_rerun"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "BSD 3-Clause"
+publish = false
+
+[dependencies]
+anyhow = "1.0.86"
+camino = "1.1.7"
+mcap = "0.9.0"
+memmap = "0.7.0"
+rerun = "0.15.1"
+# roslibrust = "0.9.0"
+roslibrust_codegen = "0.9.0"
+roslibrust_codegen_macro = "0.9.0"
+serde = { version = "1.0", features = ["derive"] }
+serde-big-array = "0.5.1"
+smart-default = "0.7.1"

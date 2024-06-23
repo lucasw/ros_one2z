@@ -44,7 +44,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let len_header = message.data.len() as u32;
                     let mut msg_with_header = Vec::from(len_header.to_le_bytes());
                     let mut message_data = Vec::from(message.data.clone());
-                    // println!("{:?}", print_type_of(&message));
                     msg_with_header.append(&mut message_data);
 
                     /*
@@ -61,10 +60,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     */
 
-                    // match serde_rosmsg::from_slice::<nav_msgs::Odometry>(&msg_with_header) {
-                    match serde_rosmsg::from_slice::<marti_common_msgs::Float32Stamped>(&msg_with_header) {
+                    // match serde_rosmsg::from_slice::<marti_common_msgs::Float32Stamped>(&msg_with_header) {
+                    match serde_rosmsg::from_slice::<nav_msgs::Odometry>(&msg_with_header) {
                         Ok(odom_msg) => {
-                            println!("{:#?}", odom_msg.header);
+                            println!("{:#?}", odom_msg);
                         },
                         Err(e) => {
                             println!("{:?}", e);

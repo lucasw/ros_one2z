@@ -43,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // https://github.com/adnanademovic/serde_rosmsg/blob/master/src/lib.rs#L9
                     let len_header = message.data.len() as u32;
                     let mut msg_with_header = Vec::from(len_header.to_le_bytes());
-                    let mut message_data = Vec::from(message.data.clone());
+                    let mut message_data = Vec::from(message.data);
                     msg_with_header.append(&mut message_data);
 
                     /*

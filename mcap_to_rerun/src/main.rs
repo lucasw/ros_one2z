@@ -38,11 +38,39 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match message_raw {
             Ok(message) => {
                 if message.channel.topic == *odom_topic {  // && message.channel.schema == "nav_msgs/Odometry" {
-                    println!("{:?}", message.channel.schema);
-                    let ros_msg = nav_msgs::Odometry::default();
-                    println!("{:#?}", ros_msg);
-                    // TODO(lucasw) do something with serde to deserialize/decode message.data
+                    // println!("{:?}", message.channel.schema);
 
+                    // https://github.com/adnanademovic/serde_rosmsg/blob/master/src/lib.rs#L9
+                    let len_header = message.data.len() as u32;
+                    let mut msg_with_header = Vec::from(len_header.to_le_bytes());
+                    let mut message_data = Vec::from(message.data.clone());
+                    // println!("{:?}", print_type_of(&message));
+                    msg_with_header.append(&mut message_data);
+
+                    /*
+                    {
+                        let mut test_msg = marti_common_msgs::Float32Stamped::default();
+                        test_msg.header.seq = 3;
+                        test_msg.header.frame_id = "test".to_string();
+                        test_msg.header.stamp.secs = 1;
+                        test_msg.header.stamp.nsecs = 7;
+                        test_msg.value = 1.0;
+                        let test_data = serde_rosmsg::to_vec(&test_msg).unwrap();
+                        println!("test {} - {:02x?}", test_data.len(), &test_data[..]);
+                        println!("mcap {} - {:02x?}", msg_with_header_vec.len(), &msg_with_header_vec[..]);
+                    }
+                    */
+
+                    // match serde_rosmsg::from_slice::<nav_msgs::Odometry>(&msg_with_header) {
+                    match serde_rosmsg::from_slice::<marti_common_msgs::Float32Stamped>(&msg_with_header) {
+                        Ok(odom_msg) => {
+                            println!("{:#?}", odom_msg.header);
+                        },
+                        Err(e) => {
+                            println!("{:?}", e);
+                        },
+                    }
+                    /*
                     let ts = message.publish_time;
                     println!(
                         "{} {} [{}] [{}]...",
@@ -62,6 +90,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .collect::<Vec<_>>()
                             .join(" ")
                     );
+                    */
                 }
             }
             Err(e) => {

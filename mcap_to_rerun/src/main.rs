@@ -1,6 +1,6 @@
 //! load mcaps with an Odometry topic and visualize in rerun.io
 
-use std::{env, fs};
+use std::{env, fs, path::PathBuf};
 
 use anyhow::{Context, Result};
 use camino::Utf8Path;
@@ -12,31 +12,26 @@ use roslibrust_codegen_macro::find_and_generate_ros_messages;
 
 find_and_generate_ros_messages!();
 
+/*
 fn print_type_of<T>(_: &T) -> String {
     format!("{}", std::any::type_name::<T>())
 }
+*/
 
 fn map_mcap<P: AsRef<Utf8Path>>(p: P) -> Result<Mmap> {
     let fd = fs::File::open(p.as_ref()).context("Couldn't open MCAP file")?;
     unsafe { Mmap::map(&fd) }.context("Couldn't map MCAP file")
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let rec = rerun::RecordingStreamBuilder::new("bag_odom_to_rerun").spawn()?;
-
-    let args: Vec<String> = env::args().collect();
-
-    let path = &args[1];
-    let odom_topic = &args[2];
-
-    // dbg!(args);
+fn mcap_to_rerun(rec: &rerun::RecordingStream, path: &PathBuf, odom_topic: &String, ind: u32)
+        -> Result<(), Box<dyn std::error::Error>> {
     dbg!(path);
-    dbg!(odom_topic);
 
-    let mapped = map_mcap(path)?;
+    let mapped = map_mcap(path.display().to_string())?;
 
     let mut points = Vec::new();
     let mut count = 0;
+    let mut timestamp = 0.0 as f64;
 
     for message_raw in mcap::MessageStream::new(&mapped)? {
         // println!("{:?}", print_type_of(&message));
@@ -70,6 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         Ok(odom_msg) => {
                             // println!("{:#?}", odom_msg);
                             let pos = &odom_msg.pose.pose.position;
+                            timestamp = odom_msg.header.stamp.secs as f64 + odom_msg.header.stamp.nsecs as f64 / 1e9;
                             // TODO(lucasw) get min and max of xyz
                             if count % 10 == 0 {
                                 let point = glam::vec3(pos.x as f32, pos.y as f32, pos.z as f32);
@@ -87,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => {
                 println!("{:?}", e);
             },
-        }
+        }  // message_raw
     }
 
     println!("{} -> {} points extracted", count, points.len());
@@ -95,11 +91,55 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut points_vec = Vec::new();
     points_vec.push(points);
 
+    rec.set_time_seconds("sensor_time", timestamp);
+    /*
+    // this will move with the timeline
     rec.log(
         format!("{odom_topic}/position"),
-        &rerun::LineStrips3D::new(points_vec)
+        &rerun::LineStrips3D::new(points_vec.clone())
             .with_colors([rerun::Color::from([128, 128, 128, 255])]),
     )?;
+    */
+
+    // this will be persistent
+    let filename = path.file_stem().unwrap().to_string_lossy();
+    rec.log(
+        format!("{odom_topic}/position/{filename}"),
+        &rerun::LineStrips3D::new(points_vec)
+            .with_colors([rerun::Color::from([180, ((ind * 5) % 256) as u8, (ind % 256) as u8, 255])]),
+    )?;
+
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let rec = rerun::RecordingStreamBuilder::new("bag_odom_to_rerun").spawn()?;
+
+    let args: Vec<String> = env::args().collect();
+
+    let path = &args[1];
+    let odom_topic = &args[2];
+
+    // dbg!(args);
+    dbg!(odom_topic);
+
+    let mut paths: Vec<_> = std::fs::read_dir(path).unwrap()
+                                                   .map(|r| r.unwrap())
+                                                   .collect();
+    paths.sort_by_key(|dir| dir.path());
+
+    let mut ind = 0;
+    for entry in paths {
+        ind += 1;
+        // let entry = entry?;
+        match mcap_to_rerun(&rec, &entry.path(), odom_topic, ind) {
+            Ok(()) => {
+            },
+            Err(e) => {
+                println!("{:?}", e);
+            },
+        }
+    }
 
     Ok(())
 }

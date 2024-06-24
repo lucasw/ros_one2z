@@ -6,6 +6,8 @@ use anyhow::{Context, Result};
 use camino::Utf8Path;
 use memmap::Mmap;
 
+use rerun::external::glam;
+
 use roslibrust_codegen_macro::find_and_generate_ros_messages;
 
 find_and_generate_ros_messages!();
@@ -33,6 +35,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mapped = map_mcap(path)?;
 
+    let mut points = Vec::new();
+    let mut count = 0;
+
     for message_raw in mcap::MessageStream::new(&mapped)? {
         // println!("{:?}", print_type_of(&message));
         match message_raw {
@@ -58,38 +63,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("test {} - {:02x?}", test_data.len(), &test_data[..]);
                         println!("mcap {} - {:02x?}", msg_with_header_vec.len(), &msg_with_header_vec[..]);
                     }
+                    match serde_rosmsg::from_slice::<marti_common_msgs::Float32Stamped>(&msg_with_header) {
                     */
 
-                    // match serde_rosmsg::from_slice::<marti_common_msgs::Float32Stamped>(&msg_with_header) {
                     match serde_rosmsg::from_slice::<nav_msgs::Odometry>(&msg_with_header) {
                         Ok(odom_msg) => {
-                            println!("{:#?}", odom_msg);
+                            // println!("{:#?}", odom_msg);
+                            let pos = &odom_msg.pose.pose.position;
+                            // TODO(lucasw) get min and max of xyz
+                            if count % 10 == 0 {
+                                let point = glam::vec3(pos.x as f32, pos.y as f32, pos.z as f32);
+                                points.push(point);
+                            }
+
+                            count += 1;
                         },
                         Err(e) => {
                             println!("{:?}", e);
                         },
                     }
-                    /*
-                    let ts = message.publish_time;
-                    println!(
-                        "{} {} [{}] [{}]...",
-                        ts,
-                        message.channel.topic,
-                        message
-                            .channel
-                            .schema
-                            .as_ref()
-                            .map(|s| s.name.as_str())
-                            .unwrap_or_default(),
-                        message
-                            .data
-                            .iter()
-                            .take(10)
-                            .map(|b| b.to_string())
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                    );
-                    */
                 }
             }
             Err(e) => {
@@ -97,5 +89,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
         }
     }
+
+    println!("{} -> {} points extracted", count, points.len());
+
+    let mut points_vec = Vec::new();
+    points_vec.push(points);
+
+    rec.log(
+        format!("{odom_topic}/position"),
+        &rerun::LineStrips3D::new(points_vec)
+            .with_colors([rerun::Color::from([128, 128, 128, 255])]),
+    )?;
+
     Ok(())
 }

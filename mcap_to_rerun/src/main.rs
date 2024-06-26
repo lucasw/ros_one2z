@@ -23,7 +23,22 @@ fn map_mcap<P: AsRef<Utf8Path>>(p: P) -> Result<Mmap> {
     unsafe { Mmap::map(&fd) }.context("Couldn't map MCAP file")
 }
 
-fn mcap_to_rerun(rec: &rerun::RecordingStream, path: &PathBuf, odom_topic: &String, ind: u32)
+fn get_message_data_with_header<'a>(raw_message_data: std::borrow::Cow<'a, [u8]>) -> Vec<u8> {
+    let len_header = raw_message_data.len() as u32;
+    let mut msg_with_header = Vec::from(len_header.to_le_bytes());
+    let mut message_data = Vec::from(raw_message_data);
+    msg_with_header.append(&mut message_data);
+    msg_with_header
+}
+
+fn ros_to_rerun_time(ros_stamp: roslibrust_codegen::Time) -> f64 {
+    ros_stamp.secs as f64 + ros_stamp.nsecs as f64 / 1e9
+}
+
+fn mcap_to_rerun(rec: &rerun::RecordingStream, path: &PathBuf,
+                 odom_topic: &String,
+                 image_topic: &String,
+                 ind: u32)
         -> Result<(), Box<dyn std::error::Error>> {
     dbg!(path);
 
@@ -31,20 +46,34 @@ fn mcap_to_rerun(rec: &rerun::RecordingStream, path: &PathBuf, odom_topic: &Stri
 
     let mut points = Vec::new();
     let mut count = 0;
+    let mut image_count = 0;
     let mut timestamp = 0.0 as f64;
 
     for message_raw in mcap::MessageStream::new(&mapped)? {
         // println!("{:?}", print_type_of(&message));
         match message_raw {
             Ok(message) => {
-                if message.channel.topic == *odom_topic {  // && message.channel.schema == "nav_msgs/Odometry" {
+                if message.channel.topic == *image_topic {
+                    let msg_with_header = get_message_data_with_header(message.data);
+                    match serde_rosmsg::from_slice::<sensor_msgs::CompressedImage>(&msg_with_header) {
+                        Ok(image_msg) => {
+                            if image_count % 30 == 0 {
+                                rec.set_time_seconds("sensor_time", ros_to_rerun_time(image_msg.header.stamp));
+                                let img = rerun::datatypes::TensorData::from_jpeg_bytes(image_msg.data)?;
+                                rec.log("front/camera", &rerun::Image::new(img))?;
+                            }
+                            image_count += 1;
+                        },
+                        Err(e) => {
+                            println!("{:?}", e);
+                        },
+                    }
+
+                } else if message.channel.topic == *odom_topic {
+                    // message.channel.schema == "nav_msgs/Odometry"
                     // println!("{:?}", message.channel.schema);
 
                     // https://github.com/adnanademovic/serde_rosmsg/blob/master/src/lib.rs#L9
-                    let len_header = message.data.len() as u32;
-                    let mut msg_with_header = Vec::from(len_header.to_le_bytes());
-                    let mut message_data = Vec::from(message.data);
-                    msg_with_header.append(&mut message_data);
 
                     /*
                     {
@@ -61,11 +90,13 @@ fn mcap_to_rerun(rec: &rerun::RecordingStream, path: &PathBuf, odom_topic: &Stri
                     match serde_rosmsg::from_slice::<marti_common_msgs::Float32Stamped>(&msg_with_header) {
                     */
 
+                    let msg_with_header = get_message_data_with_header(message.data);
+
                     match serde_rosmsg::from_slice::<nav_msgs::Odometry>(&msg_with_header) {
                         Ok(odom_msg) => {
                             // println!("{:#?}", odom_msg);
                             let pos = &odom_msg.pose.pose.position;
-                            timestamp = odom_msg.header.stamp.secs as f64 + odom_msg.header.stamp.nsecs as f64 / 1e9;
+                            timestamp = ros_to_rerun_time(odom_msg.header.stamp);
                             // TODO(lucasw) get min and max of xyz
                             if count % 10 == 0 {
                                 let point = glam::vec3(pos.x as f32, pos.y as f32, pos.z as f32);
@@ -119,9 +150,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let path = &args[1];
     let odom_topic = &args[2];
+    let image_topic = &args[3];
 
     // dbg!(args);
+    dbg!(path);
     dbg!(odom_topic);
+    dbg!(image_topic);
 
     let mut paths: Vec<_> = std::fs::read_dir(path).unwrap()
                                                    .map(|r| r.unwrap())
@@ -132,7 +166,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for entry in paths {
         ind += 1;
         // let entry = entry?;
-        match mcap_to_rerun(&rec, &entry.path(), odom_topic, ind) {
+        match mcap_to_rerun(&rec, &entry.path(), odom_topic, image_topic, ind) {
             Ok(()) => {
             },
             Err(e) => {

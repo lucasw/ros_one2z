@@ -23,6 +23,8 @@ async fn main() -> Result<(), anyhow::Error> {
         .unwrap();
     */
 
+    // need to have leading slash on node name and topic to function properly
+    // so figure out namespace then prefix it to name and topics
     let mut ns = String::from("");
     let args = std::env::args();
     {
@@ -34,10 +36,10 @@ async fn main() -> Result<(), anyhow::Error> {
         }
     }
 
-    // TODO(lucasw) support remapping
+    // TODO(lucasw) support remapping, have a function that takes args and the default
+    // topic name, and if there is an arg that startwith topic_name + ":=" then
+    // replace it with the right side of the := arg
 
-    // TODO(lucasw) need to have leading slash on node name and topic to fully work,
-    // so figure out namespace then prefix it to all of these
     let full_node_name = &format!("/{ns}/example").replace("//", "/");
     println!("{}", format!("full ns and node name: {full_node_name}"));
 
@@ -46,27 +48,39 @@ async fn main() -> Result<(), anyhow::Error> {
     let point_pub = nh.advertise::<geometry_msgs::PointStamped>(&format!("{ns}/point"), 2)
         .await.unwrap();
 
+    let mut float_sub = nh.subscribe::<std_msgs::Float32>(&format!("{ns}/float"), 2).await.unwrap();
+
     let mut seq = 0;
 
     loop {
-        let mut point_msg = geometry_msgs::PointStamped::default();
-        point_msg.header.stamp = time_now();
-        point_msg.header.seq = seq;
-        let pub_rv = point_pub.publish(&point_msg).await;
-        match pub_rv {
-            Ok(()) => {
-                // println!("published command");
-            },
-            Err(e) => {
-                eprintln!("command pub error, exiting {e}");
-                break;
+        // TODO(lucasw) want to have interleaved publishing and subscribing, need a tokio::select!
+        // loop for that?
+        // this will wait for an input message to trigger a publish
+        let float_msg = float_sub.next().await.unwrap();
+        {
+            {
+                let mut point_msg = geometry_msgs::PointStamped::default();
+                point_msg.header.stamp = time_now();
+                point_msg.header.seq = seq;
+                point_msg.point.x = float_msg.data as f64;
+                let pub_rv = point_pub.publish(&point_msg).await;
+                match pub_rv {
+                    Ok(()) => {
+                        // println!("published point");
+                    },
+                    Err(e) => {
+                        eprintln!("point pub error, exiting {e}");
+                        break;
+                    }
+                }
             }
         }
+
         if !nh.is_ok() {
             println!("node handle not ok, exiting");
             break;
         }
-        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        // tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         seq += 1;
     }
 

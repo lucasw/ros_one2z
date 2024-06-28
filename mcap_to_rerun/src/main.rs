@@ -23,6 +23,7 @@ fn map_mcap<P: AsRef<Utf8Path>>(p: P) -> Result<Mmap> {
     unsafe { Mmap::map(&fd) }.context("Couldn't map MCAP file")
 }
 
+// TODO(lucasw) https://github.com/Carter12s/roslibrust/issues/158#issuecomment-2187839437
 fn get_message_data_with_header<'a>(raw_message_data: std::borrow::Cow<'a, [u8]>) -> Vec<u8> {
     let len_header = raw_message_data.len() as u32;
     let mut msg_with_header = Vec::from(len_header.to_le_bytes());

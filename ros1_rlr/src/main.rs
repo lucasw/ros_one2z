@@ -1,4 +1,6 @@
-// TODO(lucasw) use lib.rs for this later, see https://docs.rs/roslibrust/latest/roslibrust/#message-generation
+// Example of a roslibrust ros1 native node that subscribes and publishes
+use std::sync::{Arc, Mutex};
+
 roslibrust_codegen_macro::find_and_generate_ros_messages!();
 
 fn time_now() -> roslibrust_codegen::Time {
@@ -52,36 +54,42 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let mut seq = 0;
 
-    loop {
-        // TODO(lucasw) want to have interleaved publishing and subscribing, need a tokio::select!
-        // loop for that?
-        // this will wait for an input message to trigger a publish
-        let float_msg = float_sub.next().await.unwrap();
-        {
-            {
-                let mut point_msg = geometry_msgs::PointStamped::default();
-                point_msg.header.stamp = time_now();
-                point_msg.header.seq = seq;
-                point_msg.point.x = float_msg.data as f64;
-                let pub_rv = point_pub.publish(&point_msg).await;
-                match pub_rv {
-                    Ok(()) => {
-                        // println!("published point");
-                    },
-                    Err(e) => {
-                        eprintln!("point pub error, exiting {e}");
-                        break;
-                    }
+    let float_msg = Arc::new(Mutex::new(std_msgs::Float32::default()));
+
+    // interleaved publishing and subscribing
+    tokio::select! {
+        _ = async { loop {
+            let new_float_msg = float_sub.next().await.unwrap();
+            *float_msg.clone().lock().unwrap() = new_float_msg;
+        }} => {},
+        _ = async { loop {
+            let mut point_msg = geometry_msgs::PointStamped::default();
+            point_msg.header.stamp = time_now();
+            point_msg.header.seq = seq;
+            // TODO(lucasw) is clone() better?
+            // point_msg.point.x = float_msg.clone().lock().unwrap().data as f64;
+            point_msg.point.x = float_msg.lock().unwrap().data as f64;
+            let pub_rv = point_pub.publish(&point_msg).await;
+            match pub_rv {
+                Ok(()) => {
+                    // println!("published point");
+                },
+                Err(e) => {
+                    eprintln!("point pub error, exiting {e}");
+                    break;
                 }
             }
-        }
+            seq += 1;
 
-        if !nh.is_ok() {
-            println!("node handle not ok, exiting");
-            break;
-        }
-        // tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-        seq += 1;
+            // not sure what causes this to be not ok, killing the roscore doesn't trigger it
+            // and ctrl-c works without it
+            if !nh.is_ok() {
+                println!("node handle not ok, exiting");
+                break;
+            }
+
+            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        }} => {},
     }
 
     Ok(())

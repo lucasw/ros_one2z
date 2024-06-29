@@ -60,7 +60,7 @@ async fn main() -> Result<(), anyhow::Error> {
     tokio::select! {
         _ = async { loop {
             let new_float_msg = float_sub.next().await.unwrap();
-            *float_msg.clone().lock().unwrap() = new_float_msg;
+            *float_msg.clone().lock().unwrap() = new_float_msg.unwrap();
         }} => {},
         _ = async { loop {
             let mut point_msg = geometry_msgs::PointStamped::default();

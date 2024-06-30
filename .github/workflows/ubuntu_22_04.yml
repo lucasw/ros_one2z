@@ -35,6 +35,8 @@ jobs:
 
       - name: apt ros installs
         run: |
+          sudo apt-get install -yqq libgeometry-msgs-dev
+          sudo apt-get install -yqq libstd-msgs-dev
           sudo apt-get install -yqq ros-geometry-msgs
           sudo apt-get install -yqq ros-std-msgs
           sudo apt-get install -yqq rospack-tools

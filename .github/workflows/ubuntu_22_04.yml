@@ -37,6 +37,7 @@ jobs:
         run: |
           sudo apt-get install -yqq ros-geometry-msgs
           sudo apt-get install -yqq ros-std-msgs
+          sudo apt-get install -yqq rospack-tools
 
       # TODO(lucasw) replace with corrosion + cmake building?
       - name: rust cargo build

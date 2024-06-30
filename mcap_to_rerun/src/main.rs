@@ -58,7 +58,7 @@ fn mcap_to_rerun(rec: &rerun::RecordingStream, path: &PathBuf,
                     let msg_with_header = get_message_data_with_header(message.data);
                     match serde_rosmsg::from_slice::<sensor_msgs::CompressedImage>(&msg_with_header) {
                         Ok(image_msg) => {
-                            if image_count % 30 == 0 {
+                            if image_count % 120 == 0 {
                                 rec.set_time_seconds("sensor_time", ros_to_rerun_time(image_msg.header.stamp));
                                 let img = rerun::datatypes::TensorData::from_jpeg_bytes(image_msg.data)?;
                                 rec.log("front/camera", &rerun::Image::new(img))?;

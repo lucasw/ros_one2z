@@ -7,7 +7,9 @@ on:
 jobs:
   ubuntu2204:
     runs-on: ubuntu-22.04
-    # env:
+    env:
+      # roslibrust needs this set
+      ROS_PACKAGE_PATH: /usr/share
     steps:
       - name: git clone this
         uses: actions/checkout@v4

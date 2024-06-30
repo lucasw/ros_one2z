@@ -1,0 +1,49 @@
+name: Ubuntu 22.04 build with debian ros packages along with source packages
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  ubuntu2204:
+    runs-on: ubuntu-22.04
+    # env:
+    steps:
+      - name: git clone this
+        uses: actions/checkout@v4
+        with:
+          path: catkin_ws/src/ros_one2z
+
+      - name: os version
+        run: |
+          lsb_release -a
+
+      - name: apt update
+        run: |
+          sudo apt-get update
+
+      - name: apt upgrade
+        run: |
+          sudo apt-get upgrade
+
+      - name: apt rust installs
+        run: |
+          sudo apt-get install -yqq cargo
+          sudo apt-get install -yqq rustc
+          cargo --version
+          rustc --version
+
+      - name: apt ros installs
+        run: |
+          sudo apt-get install -yqq ros-geometry-msgs
+          sudo apt-get install -yqq ros-std-msgs
+
+      # TODO(lucasw) replace with corrosion + cmake building?
+      - name: rust cargo build
+        run: |
+          cd catkin_ws/src/ros_one2z/ros1_rlr
+          echo $ROS_PACKAGE_PATH
+          rospack find geometry_msgs
+          rospack find std_msgs
+          cargo build
+          cargo build --release

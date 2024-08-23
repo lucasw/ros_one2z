@@ -20,9 +20,15 @@ from rospy.msg import AnyMsg
 
 def main():
     rospy.init_node("play_mcap")
+    while not rospy.is_shutdown():
+        play_mcap(sys.argv[1])
+        rospy.loginfo("looping")
+        rospy.sleep(1.0)
+
+def play_mcap(name):
     decoder = DecoderFactory()
     protobuf_decoder = ProtobufDecoderFactory()
-    with open(sys.argv[1], "rb") as f:
+    with open(name, "rb") as f:
         reader = make_reader(f, decoder_factories=[decoder])
         schemas = reader.get_summary().schemas
         for schema_id, schema in schemas.items():
@@ -103,6 +109,7 @@ def main():
                     pubs[channel.topic] = rospy.Publisher(channel.topic, msg_type, queue_size=3)
                 # second part of avoided decoding, is avoiding encoding via AnyMsg
                 msg = AnyMsg()
+                # print(f"{[d for d in message.data]}")
                 msg._buff = message.data
                 pubs[channel.topic].publish(msg)
 

@@ -20,12 +20,14 @@ from rospy.msg import AnyMsg
 
 def main():
     rospy.init_node("play_mcap")
+    msg_classes = {}
     while not rospy.is_shutdown():
-        play_mcap(sys.argv[1])
+        play_mcap(sys.argv[1], msg_classes)
         rospy.loginfo("looping")
         rospy.sleep(1.0)
 
-def play_mcap(name):
+
+def play_mcap(name: str, msg_classes):
     decoder = DecoderFactory()
     protobuf_decoder = ProtobufDecoderFactory()
     with open(name, "rb") as f:
@@ -102,8 +104,28 @@ def play_mcap(name):
                     rospy.logwarn("can't translate message")
 
             elif schema.encoding == "ros1msg":
-                msg_type = get_message_class(schema.name)
                 if channel.topic not in pubs:
+                    if schema.name not in msg_classes:
+                        if True:
+                            msg_type = get_message_class(schema.name)
+                        else:
+                            # TODO(lucasw) this only works with the md5sum
+                            # TODO(lucasw) this is nav_msgs/Odometry,
+                            # how to compute from message_definition?
+                            md5sum = "cd5e73d190d741a2f92e81eda573aca7"
+                            message_definition = schema.data
+
+                            class MyShapeShifterMsg(rospy.AnyMsg):
+                                _md5sum = md5sum
+                                _type = schema.name
+                                _full_text = message_definition
+
+                                def __init__(self):
+                                    self._buff = None
+
+                            msg_type = MyShapeShifterMsg
+                        msg_classes[schema.name] = msg_type
+                    msg_type = msg_classes[schema.name]
                     text = f"ros1msg '{schema.name}' on {channel.topic}, {msg_type}"
                     rospy.loginfo(text)
                     pubs[channel.topic] = rospy.Publisher(channel.topic, msg_type, queue_size=3)

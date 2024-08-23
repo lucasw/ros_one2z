@@ -47,7 +47,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let nh = NodeHandle::new(&std::env::var("ROS_MASTER_URI")?, full_node_name)
         .await.unwrap();
-    let point_pub = nh.advertise::<geometry_msgs::PointStamped>(&format!("{ns}/point"), 2)
+    let point_pub = nh.advertise::<geometry_msgs::PointStamped>(&format!("{ns}/point"), 2, false)
         .await.unwrap();
 
     let mut float_sub = nh.subscribe::<std_msgs::Float32>(&format!("{ns}/float"), 2).await.unwrap();

@@ -27,7 +27,7 @@ def main():
     count = 0
     while not rospy.is_shutdown():
         rate = rospy.get_param("~rate", 1.0)
-        play_mcap(sys.argv[1], msg_classes)
+        play_mcap(sys.argv[1], msg_classes, rate)
         rospy.loginfo(f"looping {count}")
         count += 1
         time.sleep(1.0)
@@ -186,7 +186,7 @@ def play_mcap(name: str, msg_classes, rate=1.0):
 
         # TODO(lucasw) keep advancing /clock for a few seconds before looping
         for i in range(100):
-            last_clock_msg.time += rospy.Duration(0.05)
+            last_clock_msg.clock += rospy.Duration(0.05)
             clock_pub.publish(last_clock_msg)
             time.sleep(0.01)
 

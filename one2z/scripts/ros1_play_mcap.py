@@ -2,7 +2,7 @@
 """
 load a ros1 mcap file and play messages out of it
 
-pip install mcap mcap-protobuf-support
+pip install mcap mcap-protobuf-support mcap-ros1-support
 
 rosrun one2z ros1_play_mcap.py demo_2023-11-18_06-06-59_image_only.mcap
 
@@ -15,31 +15,38 @@ from mcap.reader import make_reader
 from mcap_protobuf.decoder import DecoderFactory as ProtobufDecoderFactory
 from mcap_ros1.decoder import DecoderFactory
 from roslib.message import get_message_class
+from rosgraph_msgs.msg import Clock
 from rospy.msg import AnyMsg
 
 
 def main():
     rospy.init_node("play_mcap")
     msg_classes = {}
+    count = 0
     while not rospy.is_shutdown():
-        play_mcap(sys.argv[1], msg_classes)
-        rospy.loginfo("looping")
         rospy.sleep(1.0)
+        play_mcap(sys.argv[1], msg_classes)
+        rospy.loginfo(f"looping {count}")
+        count += 1
 
 
 def play_mcap(name: str, msg_classes):
+    # TODO(lucasw) make optional
+    clock_pub = rospy.Publisher("/clock", Clock, queue_size=3)
+    last_clock_msg = None
+
     decoder = DecoderFactory()
     protobuf_decoder = ProtobufDecoderFactory()
     with open(name, "rb") as f:
         reader = make_reader(f, decoder_factories=[decoder])
         schemas = reader.get_summary().schemas
         for schema_id, schema in schemas.items():
-            rospy.loginfo(f"encoding: {schema.encoding}")
+            rospy.loginfo(f"encoding: {schema.name} {schema.encoding}")
 
         summary = reader.get_summary()
         pubs = {}
         for key, channel in summary.channels.items():
-            rospy.loginfo(channel.topic)
+            rospy.logdebug(channel.topic)
             # pubs[channel.topic] = None
 
         schema_map = {
@@ -74,9 +81,15 @@ def play_mcap(name: str, msg_classes):
 
                     if channel.topic not in pubs:
                         text = f"protobuf '{schema.name}' -> ros1msg '{dst_schema_name}' on {topic}, {msg_type}"
-                        rospy.loginfo(text)
-                        rospy.loginfo(schema)
-                        pubs[topic] = rospy.Publisher(topic, msg_type, queue_size=3)
+                        rospy.logdebug(text)
+                        rospy.logdebug(schema)
+                        # TODO(lucasw) is there any metadata to show if this should be static or not?
+                        # also this will work incorrectly it will publish all the messages in a row
+                        # and then only latch the last one, it needs to aggregate with more special case
+                        # code here
+                        if channel.topic == "/tf_static":
+                            latch = True
+                        pubs[topic] = rospy.Publisher(topic, msg_type, latch=latch, queue_size=3)
 
                     # TODO(lucasw) deserialize protobuf message
                     msg_decoder = protobuf_decoder.decoder_for("protobuf", schema)
@@ -112,7 +125,8 @@ def play_mcap(name: str, msg_classes):
                             # TODO(lucasw) this only works with the md5sum
                             # TODO(lucasw) this is nav_msgs/Odometry,
                             # how to compute from message_definition?
-                            md5sum = "cd5e73d190d741a2f92e81eda573aca7"
+                            # md5sum = "cd5e73d190d741a2f92e81eda573aca7"
+                            md5sum = "*"
                             message_definition = schema.data
 
                             class MyShapeShifterMsg(rospy.AnyMsg):
@@ -127,13 +141,19 @@ def play_mcap(name: str, msg_classes):
                         msg_classes[schema.name] = msg_type
                     msg_type = msg_classes[schema.name]
                     text = f"ros1msg '{schema.name}' on {channel.topic}, {msg_type}"
-                    rospy.loginfo(text)
+                    rospy.logdebug(text)
                     pubs[channel.topic] = rospy.Publisher(channel.topic, msg_type, queue_size=3)
                 # second part of avoided decoding, is avoiding encoding via AnyMsg
                 msg = AnyMsg()
                 # print(f"{[d for d in message.data]}")
                 msg._buff = message.data
                 pubs[channel.topic].publish(msg)
+
+                clock_msg = Clock()
+                clock_msg.clock = rospy.Time.from_sec(t_cur)
+                if last_clock_msg is None or (clock_msg.clock - last_clock_msg.clock) > rospy.Duration(0.005):
+                    clock_pub.publish(clock_msg)
+                    last_clock_msg = clock_msg
 
             dt = t_cur - t_old
             rospy.sleep(dt)

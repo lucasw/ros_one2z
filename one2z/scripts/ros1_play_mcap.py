@@ -26,13 +26,14 @@ def main():
     msg_classes = {}
     count = 0
     while not rospy.is_shutdown():
+        rate = rospy.get_param("~rate", 1.0)
         play_mcap(sys.argv[1], msg_classes)
         rospy.loginfo(f"looping {count}")
         count += 1
         time.sleep(1.0)
 
 
-def play_mcap(name: str, msg_classes):
+def play_mcap(name: str, msg_classes, rate=1.0):
     # TODO(lucasw) make optional
     clock_pub = rospy.Publisher("/clock", Clock, queue_size=3)
     last_clock_msg = None
@@ -180,7 +181,7 @@ def play_mcap(name: str, msg_classes):
                     last_tf_static_stamp = clock_msg.clock
 
             dt = t_cur - t_old
-            time.sleep(dt)
+            time.sleep(dt / rate)
             t_old = t_cur
 
         # TODO(lucasw) keep advancing /clock for a few seconds before looping

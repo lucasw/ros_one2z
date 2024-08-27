@@ -9,6 +9,7 @@ rosrun one2z ros1_play_mcap.py demo_2023-11-18_06-06-59_image_only.mcap
 """
 
 import sys
+import time
 
 import rospy
 from mcap.reader import make_reader
@@ -17,6 +18,7 @@ from mcap_ros1.decoder import DecoderFactory
 from roslib.message import get_message_class
 from rosgraph_msgs.msg import Clock
 from rospy.msg import AnyMsg
+# from tf2_msgs.msg import TFMessage
 
 
 def main():
@@ -24,16 +26,21 @@ def main():
     msg_classes = {}
     count = 0
     while not rospy.is_shutdown():
-        rospy.sleep(1.0)
         play_mcap(sys.argv[1], msg_classes)
         rospy.loginfo(f"looping {count}")
         count += 1
+        time.sleep(1.0)
 
 
 def play_mcap(name: str, msg_classes):
     # TODO(lucasw) make optional
     clock_pub = rospy.Publisher("/clock", Clock, queue_size=3)
     last_clock_msg = None
+
+    # TODO(lucasw) just going to publisher tf static over and over, later decode and make a proper aggregated
+    # TFMessage
+    tf_static_messages = []
+    last_tf_static_stamp = rospy.Time(0)
 
     decoder = DecoderFactory()
     protobuf_decoder = ProtobufDecoderFactory()
@@ -63,6 +70,8 @@ def play_mcap(name: str, msg_classes):
                 break
 
             t_cur = message.log_time / 1e9
+            clock_msg = Clock()
+            clock_msg.clock = rospy.Time.from_sec(t_cur)
             if t0 is None:
                 t0 = t_cur
                 rospy.loginfo(f"{t0:0.3f}s")
@@ -83,13 +92,7 @@ def play_mcap(name: str, msg_classes):
                         text = f"protobuf '{schema.name}' -> ros1msg '{dst_schema_name}' on {topic}, {msg_type}"
                         rospy.logdebug(text)
                         rospy.logdebug(schema)
-                        # TODO(lucasw) is there any metadata to show if this should be static or not?
-                        # also this will work incorrectly it will publish all the messages in a row
-                        # and then only latch the last one, it needs to aggregate with more special case
-                        # code here
-                        if channel.topic == "/tf_static":
-                            latch = True
-                        pubs[topic] = rospy.Publisher(topic, msg_type, latch=latch, queue_size=3)
+                        pubs[topic] = rospy.Publisher(topic, msg_type, queue_size=3)
 
                     # TODO(lucasw) deserialize protobuf message
                     msg_decoder = protobuf_decoder.decoder_for("protobuf", schema)
@@ -142,22 +145,49 @@ def play_mcap(name: str, msg_classes):
                     msg_type = msg_classes[schema.name]
                     text = f"ros1msg '{schema.name}' on {channel.topic}, {msg_type}"
                     rospy.logdebug(text)
-                    pubs[channel.topic] = rospy.Publisher(channel.topic, msg_type, queue_size=3)
+
+                    # TODO(lucasw) is there any metadata to show if this should be static or not?
+                    # also this will work incorrectly it will publish all the messages in a row
+                    # and then only latch the last one, it needs to aggregate with more special case
+                    # code here
+                    latch = False
+                    queue_size = 20
+                    if channel.topic == "/tf_static":
+                        queue_size == 100
+                    pubs[channel.topic] = rospy.Publisher(channel.topic, msg_type,
+                                                          latch=latch, queue_size=queue_size)
+
+                if channel.topic == "/tf_static":
+                    # TODO(lucasw) decode the message and make a single aggregated tf_static message
+                    tf_static_messages.append(message)
+                    continue
+
                 # second part of avoided decoding, is avoiding encoding via AnyMsg
                 msg = AnyMsg()
                 # print(f"{[d for d in message.data]}")
                 msg._buff = message.data
                 pubs[channel.topic].publish(msg)
 
-                clock_msg = Clock()
-                clock_msg.clock = rospy.Time.from_sec(t_cur)
                 if last_clock_msg is None or (clock_msg.clock - last_clock_msg.clock) > rospy.Duration(0.005):
                     clock_pub.publish(clock_msg)
                     last_clock_msg = clock_msg
 
+                if (clock_msg.clock - last_tf_static_stamp) > rospy.Duration(0.5):
+                    for message in tf_static_messages:
+                        tf_static_msg = AnyMsg()
+                        tf_static_msg._buff = message.data
+                        pubs["/tf_static"].publish(tf_static_msg)
+                    last_tf_static_stamp = clock_msg.clock
+
             dt = t_cur - t_old
-            rospy.sleep(dt)
+            time.sleep(dt)
             t_old = t_cur
+
+        # TODO(lucasw) keep advancing /clock for a few seconds before looping
+        for i in range(100):
+            last_clock_msg.time += rospy.Duration(0.05)
+            clock_pub.publish(last_clock_msg)
+            time.sleep(0.01)
 
 
 if __name__ == "__main__":

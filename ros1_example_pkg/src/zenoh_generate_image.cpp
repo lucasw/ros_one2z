@@ -9,8 +9,6 @@
 #include <sensor_msgs/Image.h>
 #include <zenoh.hxx>
 
-using namespace zenoh;
-
 
 void update_value(float& value, float& velocity,
                   float min_value, float max_value, const float margin = 0)

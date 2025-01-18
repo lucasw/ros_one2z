@@ -60,8 +60,9 @@ fn mcap_to_rerun(rec: &rerun::RecordingStream, path: &PathBuf,
                         Ok(image_msg) => {
                             if image_count % 120 == 0 {
                                 rec.set_time_seconds("sensor_time", ros_to_rerun_time(image_msg.header.stamp));
-                                let img = rerun::datatypes::TensorData::from_jpeg_bytes(image_msg.data)?;
-                                rec.log("front/camera", &rerun::Image::new(img))?;
+                                let img = rerun::EncodedImage::from_file_contents(image_msg.data);
+                                // rec.log(message.channel.topic.clone(), &img)?;
+                                rec.log("image", &img)?;
                             }
                             image_count += 1;
                         },
